@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="森を拓いて蓄え、毎年きびしくなる冬を一家で越えていく開拓ゲーム。">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>AgriFamilie</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: one phone screen — slim header, cropped cross-section diorama, meter strip, family chips, icon action grid, sticky dock. Details live in long-press peeks. */
+:root{
+  --bg:#e6e9e7; --paper:#f5f6f3; --ink:#1c2330; --muted:#5b6471; --line:#c8cecf;
+  --accent:#2d4875; --ember:#b8532a; --danger:#a3372f; --ok:#4f7a45; --boon:#2d6a8a; --trial:#9b3b33;
+  --f-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10151c; --paper:#18202a; --ink:#e5e8ed; --muted:#98a2b0; --line:#2b3441;
+  --accent:#93acdb; --ember:#e0824d; --danger:#e26c63; --ok:#8dbb7d; --boon:#7fbfe0; --trial:#e88078; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10151c; --paper:#18202a; --ink:#e5e8ed; --muted:#98a2b0; --line:#2b3441;
+  --accent:#93acdb; --ember:#e0824d; --danger:#e26c63; --ok:#8dbb7d; --boon:#7fbfe0; --trial:#e88078; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:8px 0;
+  -webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.when{font-family:var(--f-display);font-weight:800;font-size:21px;line-height:1.1;white-space:nowrap}
+.when small{font-size:12px;color:var(--muted);font-weight:600;margin-left:4px}
+.score{font-size:11px;color:var(--muted);white-space:nowrap}
+.score b{font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums;font-family:var(--f-display);margin-left:4px}
+.timeline{display:grid;grid-template-columns:repeat(9,1fr);gap:2px}
+.cell{height:5px;border-radius:2px;opacity:.3}
+.cell.s{background:#6c8c4b}.cell.a{background:#ad7730}.cell.w{background:#6a8aab}
+.cell.ev{box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--ink) 60%,transparent)}
+.cell.past{opacity:.7}.cell.now{opacity:1;outline:1.5px solid var(--ink);outline-offset:1px}
+.stage{border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#2b201a;line-height:0;position:relative}
+#scene{width:100%;height:auto;display:block}
+#scene text{font-family:var(--f-body)}
+.cl{font-size:8.5px;fill:#cdbba0;letter-spacing:.08em}
+.cn{font-size:13px;font-weight:700;fill:#f3e9d8;font-family:var(--f-display)!important}
+.fxt{font-size:12px;font-weight:700;fill:#fff;paint-order:stroke;stroke:#2b201a;stroke-width:3px}
+.tag{font-size:6.5px;fill:#3b2f22;font-weight:700}
+.arrive{animation:pop .45s cubic-bezier(.3,1.6,.6,1) both;transform-box:fill-box;transform-origin:50% 100%}
+.leave{animation:out .8s ease-in forwards;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes pop{from{transform:scale(0);opacity:0}}
+@keyframes out{100%{transform:translateY(-12px) scale(.6);opacity:0}}
+.smoke{animation:smoke 3.6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes smoke{0%{transform:translate(0,0) scale(.6);opacity:.8}100%{transform:translate(10px,-24px) scale(2);opacity:0}}
+.flake{animation:fall linear infinite}
+@keyframes fall{from{transform:translateY(-6px)}to{transform:translateY(84px)}}
+.sway{animation:sway 4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes sway{50%{transform:rotate(3deg)}}
+.graze{animation:graze 5s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes graze{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+@media (prefers-reduced-motion:reduce){.arrive,.leave,.smoke,.flake,.sway,.graze{animation:none}.leave{opacity:0}}
+.badge{position:absolute;bottom:6px;right:6px;line-height:1.2;display:flex;gap:4px;align-items:center;background:rgba(20,24,32,.55);color:#f1f3f5;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700}
+.badge i{width:8px;height:8px;border-radius:50%;border:1.5px solid #f08a80}
+.badge i.on{background:#f08a80}
+.strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center}
+.meter{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;font-size:12px;font-weight:700}
+.bar{height:7px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);transition:width .5s}
+.bar i.warn{background:var(--ember)}.bar i.bad{background:var(--danger)}
+.num{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;font-weight:400;white-space:nowrap}
+.roster{display:flex;gap:6px;overflow-x:auto;padding:2px 1px 4px;scrollbar-width:none}
+.roster::-webkit-scrollbar{display:none}
+.peekable{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.who{font:inherit;color:var(--ink);text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer;display:flex;flex-direction:column;gap:3px;flex:0 0 auto;min-width:76px}
+.who.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.who.spent{opacity:.5}
+.who:focus-visible,.act:focus-visible,.dock button:focus-visible,.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.who .nm{font-family:var(--f-display);font-weight:800;font-size:13px;line-height:1.15;white-space:nowrap}
+.who .old{font-family:var(--f-body);font-size:10px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 3px;margin-left:4px;vertical-align:2px}
+.who .ln{display:flex;gap:5px;align-items:center;justify-content:space-between}
+.sks{display:flex;gap:2px}
+.sk{font-size:10px;line-height:15px;width:15px;text-align:center;border-radius:3px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:700}
+.pips{display:flex;gap:2px}
+.pip{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--accent)}
+.pip.on{background:var(--accent)}
+.study{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.study i{display:block;height:100%;background:var(--boon)}
+.acthead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;color:var(--muted)}
+.acthead b{color:var(--ink);font-family:var(--f-display);font-size:14px}
+.actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}
+.act{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 4px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;position:relative}
+.act svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.act .t{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.act .c{position:absolute;top:4px;right:5px;display:flex;gap:2px}
+.act .md{position:absolute;top:2px;left:5px;font-size:10px;line-height:1;display:flex;gap:1px}
+.act .md .up{color:var(--boon)}.act .md .dn{color:var(--trial)}
+#peek .mu{color:#9fd3f0}#peek .mdn{color:#f3a596}
+.act .c i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.act.off{opacity:.35;cursor:default}
+.act:not(.off):active{transform:scale(.96)}
+.hright{display:flex;align-items:center;gap:8px}
+.snd{font:inherit;font-size:11px;font-weight:700;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:999px;padding:2px 9px;cursor:pointer}
+.snd[aria-pressed="false"]{text-decoration:line-through}
+.titlescr{position:fixed;inset:0;z-index:25;background:var(--bg);overflow:auto;
+  padding:max(20px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.titlescr[hidden]{display:none}
+.rkst{margin-top:10px;padding:8px 10px;border-radius:6px;background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:13px;color:var(--ink)}
+.sbform{display:flex;gap:6px}.sbform input{flex:1;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+.sbform button{font:inherit;font-weight:700;padding:8px 12px;border:0;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer}.sbform button:disabled{opacity:.6}
+table.rk td:first-child{width:2.2em;color:var(--muted);font-weight:700}
+table.rk td small{display:block;color:var(--muted);font-size:11px}
+table.rk tr.me td{color:var(--accent);font-weight:700}
+.tcol{max-width:460px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.tstage{width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--line);line-height:0;background:#2b201a}
+#tscene{width:100%;height:auto;display:block}
+.logo{font-family:"UnifrakturMaguntia","Shippori Mincho B1",serif;font-weight:400;font-size:clamp(44px,13vw,64px);line-height:1;margin:10px 0 0;letter-spacing:.01em;color:var(--ink)}
+.tagline{margin:0;color:var(--muted);font-family:var(--f-display);font-weight:600;font-size:15px;line-height:1.7}
+.tstart{font:inherit;font-weight:700;font-size:17px;letter-spacing:.2em;padding:13px 0;width:min(100%,280px);border:0;border-radius:8px;background:var(--ink);color:var(--paper);cursor:pointer;margin-top:6px}
+.tstart:focus-visible,.snd:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.trow{display:flex;gap:12px;align-items:center;justify-content:center}
+.howto{width:100%;text-align:left;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.howto summary{cursor:pointer;font-weight:700;color:var(--ink);text-align:center}
+.howto ul{margin:8px 0 0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion:no-preference){.logo{animation:rise 1s ease-out both}.tagline{animation:rise 1s .2s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(8px)}}}
+.dock{position:sticky;bottom:0;background:var(--bg);display:flex;gap:6px;padding:8px 0 max(10px,env(safe-area-inset-bottom,0px));margin-top:2px;z-index:5}
+.dock button{font:inherit;border-radius:8px;cursor:pointer;padding:10px 10px;font-weight:700}
+.dock .sub{background:var(--paper);color:var(--ink);border:1px solid var(--line);font-size:12px;display:flex;align-items:center;gap:4px}
+.dock .sub em{font-style:normal;font-size:10px;padding:0 4px;border-radius:3px}
+.dock .sub em.b{background:color-mix(in srgb,var(--boon) 18%,transparent);color:var(--boon)}
+.dock .sub em.t{background:color-mix(in srgb,var(--trial) 18%,transparent);color:var(--trial)}
+.dock button{flex:1 1 0;justify-content:center}
+.auto{font-size:11px;color:var(--muted);text-align:center;min-height:1.4em}
+.fac{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.fac td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.fac td:last-child{text-align:right;color:var(--ink);font-weight:700;white-space:nowrap;padding-left:8px}
+.fac small{display:block;color:var(--muted);font-weight:400}
+#peek{position:fixed;z-index:30;max-width:270px;background:var(--ink);color:var(--paper);border-radius:8px;padding:9px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.3);pointer-events:none}
+#peek[hidden]{display:none}
+#peek h4{margin:0 0 2px;font-family:var(--f-display);font-size:15px}
+#peek .m{opacity:.72}
+#peek .w{color:#f3a596}
+#peek ul{margin:4px 0 0;padding-left:1.1em}
+.overlay[hidden]{display:none}
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,#000 28%,transparent);display:flex;align-items:flex-end;justify-content:center;
+  padding:16px max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));z-index:20}
+.modal{background:var(--paper);border:1px solid var(--line);border-radius:10px;max-width:480px;width:100%;padding:16px;display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.modal .k{font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:700}
+.modal h2{font-family:var(--f-display);font-weight:800;font-size:21px;margin:0;text-wrap:balance}
+.modal .b{color:var(--muted)}
+.modal .b b{color:var(--ink)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{font:inherit;color:var(--ink);text-align:left;background:transparent;border:1px solid var(--line);border-radius:6px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{opacity:.4;cursor:not-allowed}
+.opt span{font-size:13px;color:var(--muted)}
+.opt.main{background:var(--ink);color:var(--paper);border-color:var(--ink);align-items:center;font-weight:700}
+.fate{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{border-radius:8px;padding:12px;border:1.5px solid;display:flex;flex-direction:column;gap:4px;min-width:0}
+.card.boon{border-color:var(--boon)}.card.trial{border-color:var(--trial)}
+.card .ty{font-size:11px;letter-spacing:.2em;font-weight:700}
+.card.boon .ty{color:var(--boon)}.card.trial .ty{color:var(--trial)}
+.card .cn2{font-family:var(--f-display);font-weight:800;font-size:18px;line-height:1.25}
+.card .ds{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.card{animation:flip .5s ease-out both}.card.trial{animation-delay:.35s}
+  @keyframes flip{from{transform:rotateY(80deg);opacity:0}}}
+.mlist{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.mlist div{display:flex;gap:8px}.mlist b{flex:0 0 auto}
+.mlist .bn b{color:var(--boon)}.mlist .tr b{color:var(--trial)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.log li{color:var(--muted)}.log li:first-child{color:var(--ink)}
+.log b{color:var(--ink)}
+table.sc{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+table.sc td{padding:4px 0;border-bottom:1px solid var(--line)}
+table.sc td:last-child{text-align:right}
+table.sc tr.tot td{font-weight:700;border:0;font-size:18px;padding-top:8px;color:var(--ink)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="when" id="when"></div>
+    <div class="hright"><button type="button" class="snd" data-snd aria-pressed="true">音 オン</button><div class="score">得点<b id="score">0</b></div></div>
+  </header>
+  <div class="timeline" id="tl" aria-label="1年の進み具合。下線のあるターンの終わりに85%で出来事が起きる"></div>
+  <div class="stage peekable" id="stage"><svg id="scene" viewBox="0 70 400 196" role="img" aria-label="開拓地と地下の貯蔵庫。長押しで土地の詳細"></svg><div class="badge" id="badge"></div></div>
+  <div class="strip peekable" id="strip"></div>
+  <div class="roster" id="roster"></div>
+  <div class="acthead"><span><b id="selname"></b><span id="selsub"></span></span><span>長押しで説明</span></div>
+  <div class="actions" id="actions"></div>
+  <div class="auto" id="autoNote"></div>
+  <div class="dock">
+    <button type="button" class="sub" id="godBtn">女神 <em class="b" id="bc">0</em><em class="t" id="tc">0</em></button>
+    <button type="button" class="sub" id="logBtn">記録</button>
+    <button type="button" class="sub" id="facBtn">施設</button>
+  </div>
+</div>
+<div id="title" class="titlescr" hidden>
+  <div class="tcol">
+    <div class="tstage"><svg id="tscene" viewBox="0 70 400 196" aria-hidden="true"></svg></div>
+    <h1 class="logo">AgriFamilie</h1>
+    <p class="tagline">森を拓き、蓄え、冬を越える。<br>一家は何度の冬を越えられるか。</p>
+    <button type="button" class="tstart" id="startBtn">はじめる</button>
+    <div class="trow"><button type="button" class="snd" data-snd aria-pressed="true">音 オン</button><button type="button" class="snd" id="rankBtn">ランキング</button><span class="num" id="bestLine"></span></div>
+    <details class="howto"><summary>あそびかた</summary>
+      <ul>
+        <li>1年は夏・秋・冬が3ターンずつ。夏と秋に蓄え、冬はそれを食べて燃料を燃やす。</li>
+        <li>家族は一人ひとり技術を持ち、技術に合った行動しかできない。冬に勉学すると技術が増える（1人3つまで）。</li>
+        <li>森を拓いて平地にし、畑・牧場・燻製小屋・薪炭林に変える。改良すると効率が上がる。</li>
+        <li>冬は毎年1.2倍きびしくなる。食料か燃料が足りないと衰弱し、限界で家族を失う。</li>
+        <li>春には女神が恩恵と試練を1つずつ授ける。同じものは重なる。</li>
+        <li>家族は4人まで。大人は5年で老い、7年目から世を去ることがある。</li>
+        <li>ボタンや家族を長押しすると説明が出る。</li>
+      </ul>
+    </details>
+  </div>
+</div>
+<div id="peek" hidden></div>
+<div id="overlay" class="overlay" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+
+<script>
+
+const $=id=>document.getElementById(id);
+const r1=x=>Math.round(x*10)/10;
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait=ms=>new Promise(r=>setTimeout(r,RM()?0:ms));
+const MALE=['フリードリヒ','ハインリヒ','ヨハン','コンラート','ヴィルヘルム','オットー','カール','マティアス','ルーカス','ヤーコプ','アントン','ルートヴィヒ','エーミール','フェリックス','パウル','ハンス','ゲオルク','エルンスト','ラインハルト','ベルント','ディートリヒ','クラウス'];
+const FEMALE=['グレータ','リーゼル','アンナ','マルガレーテ','ヘートヴィヒ','エルザ','クララ','フリーダ','イルゼ','マレーネ','イングリート','ロッテ','マティルデ','ウルスラ','ゲルトルート','ハンナ','ヨハンナ','ブリギッテ','ゾフィー','ヒルデ','ルイーゼ','エーファ'];
+const SKILLS={mokko:'木工',noko:'農耕',shuryo:'狩猟',bokuchiku:'牧畜',hozon:'加工',chikusan:'畜産',kenchiku:'建築',ringyo:'林業',doko:'土工',kairyo:'燻製'};
+const SKILL_MAX=3,UPG_NEED=[4,8,12],TNAME={field:'畑',smoke:'燻製小屋',woodlot:'薪炭林',pasture:'牧場',plain:'平地',grove:'林間放牧地'};
+const LURE=.5,EVENT_RATE=.85,HONOR_PER=5;
+const FAMILY_MAX=4,SLOTS=12,X0=140,SW=(396-140)/SLOTS;
+let S,busy=false,prev=null,sel=0;
+
+function newName(sex){const pool=(sex==='m'?MALE:FEMALE).filter(n=>!S.used.includes(n));const n=pick(pool.length?pool:(sex==='m'?MALE:FEMALE));S.used.push(n);return n}
+function randSkills(n,except=[]){const ks=Object.keys(SKILLS).filter(k=>!except.includes(k)).sort(()=>Math.random()-.5);return ks.slice(0,n)}
+function newState(){
+  S={year:1,turn:1,fresh:0,pres:6,wood:4,weak:0,goats:0,tiles:[{type:'field',sown:false,lv:0,prog:0},{type:'plain'}],
+    family:[],boons:[],trials:[],winterScores:[],log:[],childThisYear:false,nextApDelta:0,extraWood:0,phase:'play',fate:null,used:[],milked:false,harvested:false};
+  const food=pick(['noko','shuryo']),fuel=pick(['mokko','doko']);
+  const [fa,mo]=Math.random()<.5?[food,fuel]:[fuel,food];
+  const rest=Object.keys(SKILLS).filter(k=>k!==food&&k!==fuel).sort(()=>Math.random()-.5);
+  const a=[fa,rest[0],rest[1]],b=[mo,rest[2]];
+  S.family.push({name:newName('m'),sex:'m',role:'父',age:25,years:3,adult:true,skills:a,study:0,ap:0});
+  S.family.push({name:newName('f'),sex:'f',role:'母',age:23,years:1,adult:true,skills:b,study:0,ap:0});
+}
+
+/* ---------- 女神の恩恵と試練 ---------- */
+const BOONS={
+  hojo:{name:'豊穣の土',desc:'種をまいた畑の収穫 +2'},
+  tsubo:{name:'不滅の壺',desc:'春の生鮮の傷み −10%（最低10%）'},
+  ro:{name:'炉の神',desc:'冬の燃料の消費 −1'},
+  tamin:{name:'冬眠の知恵',desc:'家族の冬の食料消費が2割減る'},
+  te:{name:'働き者の手',desc:'夏と秋、家長のAP +1'},
+  kari:{name:'狩人の目',desc:'狩りとヤギ捕りの成功率 +15%'},
+  ame:{name:'恵みの雨',desc:'採集の収穫 +1'},
+  hi:{name:'守りの火',desc:'衰弱の限界 +2'},
+  tasan:{name:'多産の祝福',desc:'子どもが生まれた年からAP +1（最大2）'},
+  kura:{name:'深い蔵',desc:'毎年春に保存食 +5'},
+  ono:{name:'研いだ斧',desc:'薪割りの収穫 +1'},
+  kuwa:{name:'軽い鍬',desc:'開墾に要るAP −1'},
+  chichi:{name:'豊かな乳',desc:'乳搾りの収穫 +1／番'},
+  manabi:{name:'学びの灯',desc:'勉学に要るAP −1'},
+};
+const TRIALS={
+  yase:{name:'痩せた土',desc:'種をまいた畑の収穫 −2'},
+  kusare:{name:'腐りの風',desc:'冬の毎ターン、生鮮が5%傷む'},
+  kogoe:{name:'凍える炉',desc:'冬の燃料の消費 +1'},
+  ue:{name:'飢えの年',desc:'家族の冬の食料消費が2割増える'},
+  omoi:{name:'重い体',desc:'夏と秋、家長のAP −1'},
+  kemono:{name:'獣が遠のく',desc:'狩りとヤギ捕りの成功率 −15%'},
+  nezumi:{name:'鼠の害',desc:'毎年春に保存食の2割を失う（重なるほど増える）'},
+  hosoi:{name:'細い命',desc:'衰弱の限界 −1'},
+  nibui:{name:'鈍った斧',desc:'薪割りの収穫 −1'},
+  katai:{name:'固い大地',desc:'畑を作るのに要るAP +1、開墾で燃料が出ない'},
+  ekibyo:{name:'家畜の病',desc:'毎年春にヤギが1頭死ぬ'},
+  wasure:{name:'物忘れ',desc:'勉学に要るAP +1'},
+};
+const mc=id=>S.boons.filter(x=>x===id).length+S.trials.filter(x=>x===id).length;
+const has=id=>mc(id)>0;
+
+/* ---------- 規則 ---------- */
+const season=t=>t<=3?'summer':t<=6?'autumn':'winter';
+const SJP={summer:'夏',autumn:'秋',winter:'冬',spring:'春'};
+const isGrown=m=>m.adult;
+const grownCount=()=>S.family.filter(m=>m.adult).length;
+const eldest=()=>S.family.reduce((a,m)=>m.age>a.age?m:a,S.family[0]);
+function memberMax(m,t=S.turn){
+  let b=m.adult?2:Math.min(2,mc('tasan'));
+  if(b===0)return 0;
+  if(season(t)==='winter')b=Math.ceil(b/2);
+  else if(isOld(m))b-=1;
+  else if(m===eldest())b+=mc('te')-mc('omoi');
+  if(isGrown(m))b+=S.nextApDelta;
+  return Math.max(0,b);
+}
+const OLD_AT=5,FRAIL_AT=7;
+const isOld=m=>m.adult&&(m.years||0)>=OLD_AT;
+const deathChance=m=>!m.adult||(m.years||0)<FRAIL_AT?0:Math.min(1,.3+.25*((m.years||0)-FRAIL_AT));
+const stage=m=>!m.adult?(has('tasan')?'手伝い':'幼子'):isOld(m)?'老い':'壮年';
+const role=m=>m.adult?`${m.role?m.role+'・':''}${stage(m)}`:stage(m);
+const count=type=>S.tiles.filter(t=>t.type===type).length;
+const forestLeft=()=>SLOTS-S.tiles.length;
+const wild=()=>forestLeft()+count('woodlot')*.5+count('grove')*.5;
+const goatCap=()=>count('pasture')*4+count('grove')*2;
+const peatLeft=()=>S.tiles.filter(t=>t.type==='plain').reduce((a,t)=>a+(t.peat??3),0);
+const pairsLeft=()=>Math.max(0,Math.floor(S.goats/2)-(S.milkedPairs||0));
+const winterGrowth=()=>Math.pow(1.2,S.year-1);
+function foodMult(){return winterGrowth()*Math.pow(0.8,mc('tamin'))*Math.pow(1.2,mc('ue'))}
+const famFood=()=>S.family.reduce((a,m)=>a+(isOld(m)?2:m.adult?3:1.5),0)*foodMult();
+const goatFood=()=>S.goats*1;
+const foodPerTurn=()=>famFood()+goatFood();
+function woodPer(){return Math.max(1,2*winterGrowth()+S.extraWood+mc('kogoe')-mc('ro'))}
+const weakLimit=()=>Math.max(2,4+2*mc('hi')-mc('hosoi')+(S.weakBonus||0));
+const rotRate=()=>Math.min(.9,.05*mc('kusare'));
+const springRot=()=>Math.max(.1,.6-.1*mc('tsubo')-(S.springGuard||0));
+const smokeRate=()=>Math.min(1,S.tiles.filter(t=>t.type==='smoke').reduce((a,t)=>a+.2+.1*(t.lv||0),0));
+const harvestOf=t=>Math.max(1,5+3*(t.lv||0)+(S.harvestMod||0)+2*mc('hojo')-2*mc('yase'));
+const harvestPer=()=>harvestOf({lv:0});
+const woodlotOf=t=>3+3*(t.lv||0);
+const convCap=()=>3;
+const SMOKE_MAX=6;
+function upgradeTarget(type){const ts=S.tiles.filter(t=>t.type===type&&(t.lv||0)<3);ts.forEach(t=>{t.lv=t.lv||0;t.prog=t.prog||0});return ts.sort((a,b)=>(b.prog>0)-(a.prog>0)||a.lv-b.lv)[0]}
+const luck=()=>.15*(mc('kari')-mc('kemono'));
+const huntChance=()=>Math.min(.95,Math.max(.08,.2+.06*wild()+luck()));
+const goatChance=()=>Math.min(.85,Math.max(.05,.08+.05*wild()+luck()));
+const studyNeed=()=>Math.max(1,3-mc('manabi')+mc('wasure'));
+const winterLeft=()=>season(S.turn)==='winter'?9-S.turn+1:3;
+const weakGain=sh=>sh>0?1+Math.floor((sh-1)/5):0;
+const pct=x=>Math.round(x*100)+'%';
+function log(h){S.log.unshift(`<span class="num">${S.year}年${S.turn}</span> ${h}`);S.log=S.log.slice(0,50)}
+function learn(m){if(m.skills.length>=SKILL_MAX)return null;const o=Object.keys(SKILLS).filter(k=>!m.skills.includes(k));if(!o.length)return null;const k=pick(o);m.skills.push(k);sfx('learn');return k}
+function setTile(from,to,extra={}){const t=S.tiles.find(x=>x.type===from);Object.assign(t,{type:to},extra)}
+
+/* ---------- 行動 ---------- */
+// skill: null は誰でも。ok() は true か、できない理由の文字列。
+function catalog(m){
+  const W=season(S.turn)==='winter',au=season(S.turn)==='autumn',old=m&&isOld(m);
+  const conv=convCap();
+  const left=pairsLeft(), mp=Math.min(2,left), per=(W?2:3)+mc('chichi'), milk=mp*per;
+  const ch=Math.max(1,2+mc('ono')-mc('nibui'));
+  const plain=()=>count('plain')>0||'平地がない';
+  const build1=()=>plain()!==true?plain():S.wood>=1||'燃料が1必要';
+  const space=()=>goatCap()===0?'ヤギを飼う場所がない':S.goats>=goatCap()?'ヤギの場所がいっぱい':true;
+  const upg=(type,label,skill,extraCost,extraOk)=>{const t=upgradeTarget(type);const n=t?UPG_NEED[t.lv]:0;
+    return{name:label,skill,cost:2,desc:t?`${TNAME[type]}を改良 Lv${t.lv}→${t.lv+1}（${t.prog}/${n}）${extraCost?'・'+extraCost:''}`:`${TNAME[type]}がない`,
+      ok:()=>!count(type)?`${TNAME[type]}がない`:!t?'すべてLv3':extraOk?extraOk():true,
+      run(m){if(type==='smoke')S.wood=r1(S.wood-1);t.prog+=2;if(t.prog>=n){t.prog=0;t.lv++;sfx('upgrade');log(`<b>${m.name}が${TNAME[type]}をLv${t.lv}に改良した</b>`)}else log(`${m.name}が${TNAME[type]}の改良を進めた（${t.prog}/${n}）`)}}};
+  const preserve={name:'保存加工',skill:'hozon',cost:1,desc:`生鮮を最大${conv} → 保存食`,ok:()=>S.fresh>=1||'生鮮がない',run(m){const v=Math.min(conv,Math.floor(S.fresh));S.fresh=r1(S.fresh-v);S.pres+=v;log(`${m.name}が保存食を${v}作った`)}};
+  const oil={name:'油搾り',skill:'hozon',cost:1,desc:'生鮮3 → 燃料2（灯りと炉の油）',ok:()=>S.fresh>=3||'生鮮が3必要',run(m){S.fresh=r1(S.fresh-3);S.wood=r1(S.wood+2);log(`${m.name}が油を搾った、生鮮 −3、燃料 +2`)}};
+  const milkA={name:'乳搾り',skill:'bokuchiku',cost:1,desc:left?`番${mp}組から生鮮 +${milk}（1回2組まで・残り${left}組）`:'搾れる番がいない',
+    ok:()=>Math.floor(S.goats/2)<1?'ヤギの番がいない':left<1?'このターンは全部搾った':true,run(m){S.milkedPairs=(S.milkedPairs||0)+mp;S.fresh+=milk;log(`${m.name}が番${mp}組の乳を搾った、生鮮 +${milk}`)}};
+  const slaughter={name:'畜殺',skill:'chikusan',cost:1,desc:'ヤギ −1、生鮮 +6',ok:()=>S.goats>0||'ヤギがいない',run(m){S.goats--;S.fresh+=6;log(`${m.name}がヤギを1頭つぶした、生鮮 +6`)}};
+  const lure={name:'エサ罠',skill:'chikusan',cost:2,desc:`生鮮2をエサにヤギを誘う・森の量に関係なく成功率 ${pct(LURE)}`,ok:()=>space()!==true?space():S.fresh>=2||'生鮮が2必要',anim:lureAnim};
+  const smokeA={name:'燻製づくり',skill:'kairyo',cost:1,desc:`燃料1で、生鮮を最大${SMOKE_MAX} → 保存食1.5倍`,ok:()=>S.wood<1?'燃料が1必要':S.fresh>=1||'生鮮がない',
+    run(m){const v=Math.min(SMOKE_MAX,Math.floor(S.fresh)),o=Math.floor(v*1.5);S.wood=r1(S.wood-1);S.fresh=r1(S.fresh-v);S.pres+=o;log(`${m.name}が燻製を作った、生鮮 −${v}、保存食 +${o}`)}};
+  const smokeUp=upg('smoke','燻製小屋の改良','kairyo','燃料 −1',()=>S.wood>=1||'燃料が1必要');
+  const woodUp=upg('woodlot','薪炭林の手入れ','ringyo');
+  const peat={name:'泥炭掘り',skill:'doko',cost:2,desc:`平地から泥炭を掘る・燃料 +4（残り${peatLeft()}回分）`,ok:()=>!count('plain')?'平地がない':peatLeft()>0||'掘れる泥炭が残っていない',
+    run(m){const t=S.tiles.filter(t=>t.type==='plain'&&(t.peat??3)>0)[0];t.peat=(t.peat??3)-1;S.wood=r1(S.wood+4);log(`${m.name}が泥炭を掘った、燃料 +4${t.peat?'':'（この平地は掘り尽くした）'}`)}};
+  if(!W){
+    const g=(au?3:2)+(old?1:0)+mc('ame');
+    return[
+      {name:'採集',skill:null,cost:1,desc:`生鮮 +${g}${old?'（老練）':''}`,run(m){S.fresh+=g;log(`${m.name}が採集、生鮮 +${g}`)}},
+      {name:'子をなす',skill:'adult',cost:2,desc:`家族 +1（年1回・${FAMILY_MAX}人まで）`,ok:()=>S.family.length>=FAMILY_MAX?`家族は${FAMILY_MAX}人まで`:S.childThisYear?'今年はもう授かった':grownCount()<2?'大人が2人必要':true,
+        run(m){const sex=Math.random()<.5?'m':'f';const n=newName(sex);S.family.push({name:n,sex,age:0,adult:false,skills:[],study:0,ap:0});S.childThisYear=true;log(`<b>${n}が生まれた</b>`)}},
+      {name:'薪割り',skill:'mokko',cost:1,desc:`燃料 +${ch}`,run(m){S.wood=r1(S.wood+ch);log(`${m.name}が薪割り、燃料 +${ch}`)}},
+      {name:'開墾',skill:'mokko',cost:Math.max(1,2-mc('kuwa')),desc:`森 → 平地${has('katai')?'':'・燃料 +2'}`,ok:()=>forestLeft()>0||'拓ける森がない',anim:clearAnim},
+      {name:'畑を作る',skill:'noko',cost:1+mc('katai'),desc:'平地 → 畑・燃料 −1',ok:build1,run(m){S.wood=r1(S.wood-1);setTile('plain','field',{sown:false,lv:0,prog:0});log(`${m.name}が平地を耕して<b>畑</b>にした`)}},
+      {name:'種まき',skill:null,cost:1,desc:`畑${old?'2枚まで':'1枚'}に種をまく（夏のみ）${old?'（老練）':''}`,ok:()=>season(S.turn)!=='summer'?'種まきは夏だけ':S.tiles.some(t=>t.type==='field'&&!t.sown)||'まいていない畑がない',
+        run(m){const fs=S.tiles.filter(t=>t.type==='field'&&!t.sown).sort((a,b)=>(b.lv||0)-(a.lv||0)).slice(0,old?2:1);fs.forEach(f=>f.sown=true);log(`${m.name}が畑${fs.length}枚に種をまいた`)}},
+      {name:'狩り',skill:'shuryo',cost:2,desc:`成功率 ${pct(huntChance())}・うさぎ5／鹿10／大物18`,anim:huntAnim},
+      {name:'ヤギを捕る',skill:'bokuchiku',cost:2,desc:`森で捕まえる・成功率 ${pct(goatChance())}・空き ${Math.max(0,goatCap()-S.goats)}`,ok:space,anim:goatAnim},
+      milkA,preserve,oil,slaughter,lure,
+      {name:'牧場を作る',skill:'kenchiku',cost:2,desc:'平地 → 牧場（ヤギ4頭）・燃料 −1',ok:build1,run(m){S.wood=r1(S.wood-1);setTile('plain','pasture');log(`${m.name}が柵を立てて<b>牧場</b>にした`)}},
+      {name:'燻製小屋',skill:'kenchiku',cost:2,desc:'平地 → 燻製小屋（秋の終わりに生鮮の20%を保存食に）・燃料 −1',ok:build1,run(m){S.wood=r1(S.wood-1);setTile('plain','smoke',{lv:0,prog:0});log(`${m.name}が<b>燻製小屋</b>を建てた`)}},
+      {name:'薪炭林を植える',skill:'ringyo',cost:1,desc:'平地 → 薪炭林（秋に燃料 +3）・燃料 −1',ok:build1,run(m){S.wood=r1(S.wood-1);setTile('plain','woodlot',{lv:0,prog:0});log(`${m.name}が<b>薪炭林</b>を植えた`)}},
+      woodUp,
+      upg('field','畑の改良','noko'),smokeUp,smokeA,
+      {name:'林間放牧地',skill:'doko',cost:2,desc:'平地 → 林間放牧地（森の半分の獲物・ヤギ2頭）・燃料 −1',ok:build1,run(m){S.wood=r1(S.wood-1);setTile('plain','grove');log(`${m.name}が木を残して<b>林間放牧地</b>を作った`)}},
+      peat,
+    ];
+  }
+  const need=studyNeed();
+  return[
+    {name:'枝拾い',skill:null,cost:1,desc:`燃料 +${old?2:1}${old?'（老練）':''}`,run(m){const v=old?2:1;S.wood=r1(S.wood+v);log(`${m.name}が雪の下から枝を拾った、燃料 +${v}`)}},
+    {name:'勉学',skill:'study',cost:1,desc:`APを${need}積むと新しい技術を覚える（1人${SKILL_MAX}つまで）`,run(m){m.study++;
+      if(m.study>=need){m.study=0;const k=learn(m);log(`<b>${m.name}が「${SKILLS[k]}」を身につけた</b>`)}else log(`${m.name}が勉学に励んだ（${m.study}/${need}）`)}},
+    {name:'罠猟',skill:null,cost:1,desc:`生鮮 +${old?'1〜3（老練）':'0〜2'}`,run(m){const v=old?rnd(1,3):rnd(0,2);S.fresh+=v;log(v?`${m.name}の罠に獲物、生鮮 +${v}`:`${m.name}の罠は空だった`)}},
+    {name:'氷上釣り',skill:'shuryo',cost:1,desc:'凍った湖で釣る・生鮮 +2〜4',run(m){const v=rnd(2,4);S.fresh+=v;log(`${m.name}が氷に穴を開けて釣った、生鮮 +${v}`)}},
+    milkA,preserve,oil,slaughter,woodUp,smokeUp,smokeA,
+    {...peat},
+  ];
+}
+function canDo(m,a){
+  if(a.skill===null)return true;
+  if(a.skill==='adult')return isGrown(m);
+  if(a.skill==='study')return memberMax(m,7)>0&&m.skills.length<SKILL_MAX;
+  return m.skills.includes(a.skill);
+}
+
+/* ---------- 出来事 ---------- */
+const newKid=()=>{const sex=Math.random()<.5?'m':'f';const n=newName(sex);S.family.push({name:n,sex,age:0,adult:false,skills:[],study:0,ap:0});return n};
+function addStudy(m,n){m.study+=n;if(m.study>=studyNeed()&&m.skills.length<SKILL_MAX){m.study=0;const k=learn(m);return k?`、<b>${m.name}が「${SKILLS[k]}」を身につけた</b>`:''}return''}
+const BEE_PER=4,BEAR_PER=6;
+const workers=()=>S.family.filter(m=>m.adult).length;
+const someone=k=>S.family.find(m=>m.adult&&m.skills.includes(k));
+const goatSpace=()=>S.goats<goatCap();
+function harvestBoost(d){if(S.harvested){const n=S.tiles.filter(t=>t.type==='field'&&t.sown).length;S.fresh=Math.max(0,S.fresh+d*n);return`畑${n}枚分、生鮮 ${d>0?'+'+d*n:'−'+(-d*n)}`}S.harvestMod=(S.harvestMod||0)+d;return`今年の収穫 ${d>0?'+'+d:'−'+(-d)}／枚`}
+const EVENTS={
+  summer:[
+    {title:'夕立のあとの茸',body:'森の斜面に茸が一面に出た。',apply(){const v=wild()>=5?4:2;S.fresh+=v;return`生鮮 +${v}`}},
+    {title:'旅の商人',body:'荷車を引いた商人が通りかかった。',choices:[
+      {label:'保存食3 を 燃料6 と交換',ok:()=>S.pres>=3,apply(){S.pres-=3;S.wood+=6;return'保存食 −3、燃料 +6'}},
+      {label:'燃料4 を 保存食3 と交換',ok:()=>S.wood>=4,apply(){S.wood=r1(S.wood-4);S.pres+=3;return'燃料 −4、保存食 +3'}},
+      {label:'見送る',apply(){return'商人は去っていった'}}]},
+    {title:'猪が畑を荒らした',body:'夜のうちに畑と蓄えを荒らされた。',apply(){const n=S.tiles.filter(t=>t.type==='field'&&t.sown).length;if(n)return`畑を掘り返された。${harvestBoost(-1)}`;const v=Math.min(S.fresh,3);S.fresh=r1(S.fresh-v);return`蓄えをやられた、生鮮 −${r1(v)}`}},
+    {title:'長雨',body:'雨が止まず、外に出られない。',apply(){S.nextApDelta-=1;return'次のターン、働ける者のAP −1'}},
+    {title:'迷い子',body:'山道で泣いている子どもを見つけた。',choices:[
+      {label:'引き取る',sub:'子が加わり、次の春に大人になる（家族は4人まで）',ok:()=>S.family.length<FAMILY_MAX,apply(){return`${newKid()}が家族になった`}},
+      {label:'里へ送り届ける',sub:'お礼に保存食 +2',apply(){S.pres+=2;return'保存食 +2'}}]},
+    {title:'晴天続き',body:'からりと晴れた日が続く。',apply(){S.nextApDelta+=1;return'次のターン、働ける者のAP +1'}},
+    {title:'迷いヤギ',body:'柵の外で一頭のヤギが鳴いている。',choices:[
+      {label:'ヤギの場所に迎え入れる',ok:()=>S.goats<goatCap(),sub:'ヤギ +1（飼う場所が必要）',apply(){S.goats++;return'ヤギ +1'}},
+      {label:'つぶして食べる',apply(){S.fresh+=4;return'生鮮 +4'}}]},
+    {title:'蜂の巣',body:'木のうろに大きな蜂の巣を見つけた。',choices:[
+      {label:'刺される覚悟で取る',sub:()=>`次のターン働ける者のAP −1、保存食 +働ける者×${BEE_PER}（今なら +${workers()*BEE_PER}）`,apply(){S.nextApDelta-=1;const v=workers()*BEE_PER;S.pres+=v;return`蜂蜜を壺に詰めた、保存食 +${v}`}},
+      {label:'そっとしておく',apply(){return'蜂は静かに飛び回っている'}}]},
+    {title:'日照り',body:'雨が降らず、畑の土がひび割れてきた。',apply(){return harvestBoost(-1)}},
+    {title:'野火',body:'乾いた森に火が回った。',apply(){if(forestLeft()>0){S.tiles.push({type:'plain'});return'森が1つ焼けて平地になった（獲物は減る）'}const v=Math.min(S.wood,2);S.wood=r1(S.wood-v);return`燃料 −${v}`}},
+    {title:'狐がヤギを狙う',body:'夜、柵のまわりを狐がうろついていた。',apply(){if(!S.goats)return'足跡だけが残っていた';const m=someone('kenchiku');if(m)return`${m.name}が柵を補強して守り抜いた`;S.goats--;return'ヤギが1頭さらわれた'}},
+    {title:'麓の夏祭り',body:'麓の村から祭りの太鼓が聞こえてくる。',choices:[
+      {label:'皆で出かける',sub:'次のターン働ける者のAP −1、技術を覚えていない者の勉学 +1',apply(){S.nextApDelta-=1;const ms=S.family.filter(m=>m.adult&&m.skills.length<SKILL_MAX);const got=ms.map(m=>addStudy(m,1)).join('');return ms.length?`${ms.map(m=>m.name).join('、')}が村の職人から学んだ${got}`:'皆で踊って帰ってきた'}},
+      {label:'畑を守る',apply(){return'遠くの太鼓を聞きながら働いた'}}]},
+    {title:'薬草の群生',body:'沢沿いに薬草が一面に生えていた。',apply(){S.weakBonus=(S.weakBonus||0)+1;return'この冬の衰弱の限界 +1'}},
+    {title:'落雷',body:'森の大木に雷が落ちた。',apply(){S.wood=r1(S.wood+3);return'裂けた木から燃料 +3'}},
+    {title:'渡りの羊飼い',body:'山を越える羊飼いが、ヤギを一頭譲ってもいいと言う。',choices:[
+      {label:'保存食4 で譲ってもらう',sub:'ヤギ +1（飼う場所が必要）',ok:()=>S.pres>=4&&goatSpace(),apply(){S.pres-=4;S.goats++;return'保存食 −4、ヤギ +1'}},
+      {label:'断る',apply(){return'羊飼いは峠へ向かった'}}]},
+    {title:'裏山の土砂崩れ',body:'長雨で裏山の斜面が崩れた。',apply(){const m=someone('doko');const pl=S.tiles.find(t=>t.type==='plain');if(m&&pl){pl.peat=(pl.peat??3)+3;return`${m.name}が崩れた跡に泥炭の層を見つけた、平地の泥炭 +3回分`}const v=Math.min(S.wood,2);S.wood=r1(S.wood-v);return`積んでいた燃料が埋まった、燃料 −${v}`}},
+    {title:'若木の芽吹き',body:'薪炭林の切り株から若い芽が勢いよく伸びている。',apply(){const m=someone('ringyo');const t=upgradeTarget('woodlot');if(m&&t){t.prog+=2;let r=`${m.name}が芽を選んで育てた、薪炭林の改良 +2`;if(t.prog>=UPG_NEED[t.lv]){t.prog=0;t.lv++;r+=`（Lv${t.lv}になった）`}return r}return'芽はそのまま藪になった'}},
+    {title:'巡回の鍛冶屋',body:'鍛冶屋が道具の手入れを請け負うという。',choices:[
+      {label:'燃料3 で道具を直してもらう',sub:'次のターン働ける者のAP +1',ok:()=>S.wood>=3,apply(){S.wood=r1(S.wood-3);S.nextApDelta+=1;return'燃料 −3、次のターン働ける者のAP +1'}},
+      {label:'断る',apply(){return'鍛冶屋は次の村へ向かった'}}]},
+    {title:'雹',body:'夏の空から氷の粒が叩きつけた。',apply(){const n=S.tiles.filter(t=>t.type==='field'&&t.sown).length;if(!n)return'まいた畑がなく、被害はなかった';return`種をまいた畑が打たれた。${harvestBoost(-2)}`}},
+    {title:'隣村の婚礼',body:'隣村で婚礼があり、一家も招かれた。',choices:[
+      {label:'保存食3 を祝いに持って出かける',sub:'次のターン働ける者のAP −1、この冬の衰弱の限界 +1',ok:()=>S.pres>=3,apply(){S.pres-=3;S.nextApDelta-=1;S.weakBonus=(S.weakBonus||0)+1;return'保存食 −3、心が満たされ、この冬の衰弱の限界 +1'}},
+      {label:'祝いの言葉だけ送る',apply(){return'遠くから幸せを祈った'}}]},
+    {title:'川の恵み',body:'川に小魚が群れて上ってきた。',apply(){const v=workers()*2;S.fresh+=v;return`皆で網を引いた、生鮮 +${v}`}},
+    {title:'斧の刃こぼれ',body:'硬い節に当たって斧が欠けた。',apply(){const m=someone('mokko');if(m)return`${m.name}がすぐに研ぎ直した`;const v=Math.min(S.wood,2);S.wood=r1(S.wood-v);return`割りかけの薪が無駄になった、燃料 −${v}`}},
+  ],
+  autumn:[
+    {title:'早霜',body:'思ったより早く霜が降りた。',apply(){const v=r1(S.fresh*0.15);S.fresh=r1(S.fresh-v);return`生鮮 −${v}`}},
+    {title:'市が立つ',body:'麓の村で秋の市が開かれている。',choices:[
+      {label:'生鮮4 を 保存食3 に',ok:()=>S.fresh>=4,apply(){S.fresh=r1(S.fresh-4);S.pres+=3;return'生鮮 −4、保存食 +3'}},
+      {label:'保存食5 で ヤギを1頭買う',sub:'飼う場所が必要',ok:()=>S.pres>=5&&S.goats<goatCap(),apply(){S.pres-=5;S.goats++;return'保存食 −5、ヤギ +1'}},
+      {label:'ヤギ1頭 を 保存食4 で売る',ok:()=>S.goats>0,apply(){S.goats--;S.pres+=4;return'ヤギ −1、保存食 +4'}},
+      {label:'見送る',apply(){return'何も買わなかった'}}]},
+    {title:'木の実の豊年',body:'栗も胡桃も枝がしなるほど実った。',apply(){const v=wild()>=5?6:3;S.fresh+=v;return`生鮮 +${v}${wild()<5?'（森が減って少なめ）':''}`}},
+    {title:'渡り鳥が早く発った',body:'今年の冬は厳しくなりそうだ。',apply(){S.extraWood+=1;return'この冬の燃料の消費 +1'}},
+    {title:'熊の気配',body:'沢で大きな足跡を見つけた。',choices:[
+      {label:'皆で罠を張る',sub:()=>`次のターン働ける者のAP −1、生鮮 +働ける者×${BEAR_PER}（今なら +${workers()*BEAR_PER}）`,apply(){S.nextApDelta-=1;const v=workers()*BEAR_PER;S.fresh+=v;return`熊を仕留めた。生鮮 +${v}`}},
+      {label:'近づかない',apply(){return'しばらく沢を避けた'}}]},
+    {title:'小春日和',body:'穏やかな日が続き、冬の訪れが遅れそうだ。',apply(){S.extraWood-=0.6;return'この冬の燃料の消費 −0.6'}},
+    {title:'流れの職人',body:'腕のいい職人が冬越しの宿を探している。',choices:[
+      {label:'保存食4 で弟子入りさせる',sub:'家族の誰かが新しい技術をひとつ得る',ok:()=>S.pres>=4&&S.family.some(m=>isGrown(m)&&m.skills.length<SKILL_MAX),apply(){S.pres-=4;const m=pick(S.family.filter(m=>isGrown(m)&&m.skills.length<SKILL_MAX));const k=learn(m);return`${m.name}が「${SKILLS[k]}」を学んだ`}},
+      {label:'断る',apply(){return'職人は峠を越えていった'}}]},
+    {title:'豊作の兆し',body:'穂がずっしりと重い。',apply(){return harvestBoost(2)}},
+    {title:'秋の長雨',body:'雨が続き、積んでおいた燃料が湿ってしまった。',apply(){const v=r1(Math.min(S.wood,Math.max(1,S.wood*.2)));S.wood=r1(S.wood-v);return`燃料 −${v}`}},
+    {title:'茸の山',body:'森の奥で茸の群れを見つけた。',apply(){const v=wild()>=6?5:2;S.fresh+=v;return`生鮮 +${v}${v<5?'（森が減って少なめ）':''}`}},
+    {title:'徴税吏',body:'領主の役人が年貢を取り立てに来た。',choices:[
+      {label:'保存食の1割を納める',apply(){const v=Math.ceil(S.pres*.1);S.pres-=v;return`保存食 −${v}`}},
+      {label:'納めない',sub:'腹いせに柵を壊される：燃料 −3',apply(){const v=Math.min(S.wood,3);S.wood=r1(S.wood-v);return`燃料 −${v}`}}]},
+    {title:'雁の群れ',body:'雁の大群が沼に降りた。',apply(){const m=someone('shuryo');if(m){S.fresh+=5;return`${m.name}が雁を射止めた、生鮮 +5`}return'弓を引ける者がいなかった'}},
+    {title:'野生ヤギの群れ',body:'山から野生ヤギの群れが下りてきた。',apply(){const m=someone('bokuchiku');if(m&&goatSpace()){S.goats++;return`${m.name}が1頭を群れから引き離した、ヤギ +1`}return m?'飼う場所がなかった':'近づける者がいなかった'}},
+    {title:'隣人の冬支度',body:'隣の家が燃料を余らせているという。',choices:[
+      {label:'保存食2 と 燃料4 を交換',ok:()=>S.pres>=2,apply(){S.pres-=2;S.wood+=4;return'保存食 −2、燃料 +4'}},
+      {label:'断る',apply(){return'自分たちで何とかする'}}]},
+    {title:'油の大鍋',body:'村で油搾りの大鍋を貸してくれるという。',apply(){const m=someone('hozon');if(m){S.wood+=3;return`${m.name}が油を搾った、燃料 +3`}return'使い方の分かる者がいなかった'}},
+    {title:'鮭の遡上',body:'川を鮭が真っ赤に染めて上ってくる。',apply(){const m=someone('shuryo');const v=m?10:5;S.fresh+=v;return`${m?`${m.name}が銛で次々と仕留めた、`:''}生鮮 +${v}`}},
+    {title:'乳の出がいい',body:'秋草を食べたヤギの乳がよく出る。',apply(){const pr=Math.floor(S.goats/2);if(!pr)return'乳を出すヤギの番がいない';const m=someone('bokuchiku');const v=pr*(m?3:2);S.fresh+=v;return`${m?`${m.name}が搾った、`:''}生鮮 +${v}`}},
+    {title:'隣家の不幸',body:'隣家の主が亡くなり、残された家族が困っている。',choices:[
+      {label:'保存食3 を届ける',sub:'お礼に冬の燃料を分けてもらえる：燃料 +5',ok:()=>S.pres>=3,apply(){S.pres-=3;S.wood+=5;return'保存食 −3、お礼に燃料 +5'}},
+      {label:'見舞いの言葉だけ',apply(){return'自分たちの冬支度で手一杯だった'}}]},
+    {title:'林の間伐',body:'薪炭林が込み合ってきた。',apply(){const m=someone('ringyo');const n=count('woodlot');if(!n)return'薪炭林がない';if(!m)return'手入れのできる者がいなかった';const v=2+2*n;S.wood+=v;return`${m.name}が間伐した、燃料 +${v}`}},
+    {title:'泥炭の乾き',body:'からりとした秋風が続いた。',apply(){const m=someone('doko');if(m){S.wood+=4;return`${m.name}が掘り置きの泥炭を干し上げた、燃料 +4`}return'干すものが何もなかった'}},
+    {title:'冬越しの屠畜',body:'冬の餌を考えると、ヤギを減らす時期かもしれない。',choices:[
+      {label:'1頭を燻して冬に備える',sub:'畜産の技術が必要：ヤギ −1、保存食 +8',ok:()=>S.goats>0&&!!someone('chikusan'),apply(){S.goats--;S.pres+=8;return`${someone('chikusan').name}が手際よく処理した、ヤギ −1、保存食 +8`}},
+      {label:'そのまま冬を越させる',apply(){return'ヤギたちは草を食んでいる'}}]},
+    {title:'畑の虫害',body:'葉の裏に虫がびっしりついている。',apply(){const n=S.tiles.filter(t=>t.type==='field'&&t.sown).length;if(!n)return'まいた畑がなく、被害はなかった';const m=someone('noko');if(m)return`${m.name}が灰をまいて虫を追い払った`;return`手の打ちようがなかった。${harvestBoost(-1)}`}},
+  ],
+  winter:[
+    {title:'吹雪',body:'三日三晩、炉の火を絶やせない。いつもの1ターン分の燃料が余計にいる。',apply(){const need=Math.ceil(woodPer()),v=Math.min(S.wood,need);S.wood=r1(S.wood-v);if(v<need)S.weak+=1;return`燃料 −${v}${v<need?'、衰弱 +1':''}`}},
+    {title:'熱病',body:'家族のひとりが高い熱を出した。',choices:[
+      {label:'保存食3 で薬湯を煎じる',ok:()=>S.pres>=3,apply(){S.pres-=3;return'熱は下がった'}},
+      {label:'祈る',sub:'半々の確率で衰弱 +3',apply(){if(Math.random()<.5){S.weak+=3;return'熱は長引いた。衰弱 +3'}return'朝には熱が引いていた'}}]},
+    {title:'狼の群れ',body:'夜中に遠吠えが近づいてきた。',apply(){if(S.goats>0){S.goats--;return'ヤギが1頭さらわれた'}const v=Math.min(S.pres,1+S.year);S.pres-=v;return`蔵を荒らされ保存食 −${v}`}},
+    {title:'氷の下の魚',body:'凍った湖に穴を開けたら魚が寄ってきた。',apply(){S.fresh+=3;return'生鮮 +3'}},
+    {title:'静かな夜',body:'風が止み、皆よく眠れた。',apply(){S.weak=Math.max(0,S.weak-1);return'衰弱 −1'}},
+    {title:'雪の重み',body:'屋根が軋む。雪下ろしで体が冷えた。',apply(){const v=Math.min(S.wood,1);S.wood=r1(S.wood-v);return`燃料 −${v}`}},
+    {title:'長い夜の昔話',body:'炉端で祖父の代の話を聞いた。',apply(){const ms=S.family.filter(m=>memberMax(m,7)>0&&m.skills.length<SKILL_MAX);if(!ms.length)return'皆、静かに聞き入った';const m=pick(ms);return`${m.name}の勉学が1進んだ${addStudy(m,1)}`}},
+    {title:'凍った井戸',body:'井戸が底まで凍りついた。',choices:[
+      {label:'燃料2 で氷を溶かす',ok:()=>S.wood>=2,apply(){S.wood=r1(S.wood-2);return'燃料 −2'}},
+      {label:'雪を溶かして飲む',sub:'衰弱 +1',apply(){S.weak+=1;return'衰弱 +1'}}]},
+    {title:'雪崩',body:'裏山で雪崩が起き、倒木が道をふさいだ。',apply(){S.wood=r1(S.wood+3);S.nextApDelta-=1;return'倒木から燃料 +3、次のターン働ける者のAP −1'}},
+    {title:'迷い込んだ鹿',body:'飢えた鹿が戸口まで来ていた。',apply(){S.fresh+=5;return'生鮮 +5'}},
+    {title:'旅人が戸を叩く',body:'吹雪の中、旅人が一夜の宿を求めている。',choices:[
+      {label:'保存食3 で泊める',sub:'家族の誰かの勉学 +2',ok:()=>S.pres>=3,apply(){S.pres-=3;const ms=S.family.filter(m=>m.adult&&m.skills.length<SKILL_MAX);if(!ms.length)return'旅人は礼を言って去った';const m=pick(ms);return`${m.name}の勉学 +2${addStudy(m,2)}`}},
+      {label:'断る',apply(){return'戸を閉ざした'}}]},
+    {title:'冬至の祝い',body:'一年でいちばん長い夜が来た。ごちそうを囲めば、弱った体に力が戻る。',choices:[
+      {label:'保存食2 でごちそうを作る',sub:'衰弱 −1',ok:()=>S.pres>=2,apply(){S.pres-=2;S.weak=Math.max(0,S.weak-1);return'保存食 −2、衰弱 −1'}},
+      {label:'いつも通りに過ごす',sub:'何も起きない（衰弱は増えない）',apply(){return'静かに夜が明けた'}}]},
+    {title:'寒波',body:'骨まで凍るような寒さが続く。',apply(){S.extraWood+=1;return'この冬の燃料の消費 +1'}},
+    {title:'冬のお産',body:'牧場で鳴き声がする。',apply(){if(S.goats>=2&&goatSpace()){S.goats++;return'子ヤギが生まれた、ヤギ +1'}return'風の音だった'}},
+    {title:'雨漏り',body:'雪解け水が蔵に染みこんだ。',apply(){const v=Math.min(S.pres,2);S.pres-=v;return`保存食 −${v}`}},
+    {title:'炉端の燻し',body:'炉の煙で、残った肉を燻せそうだ。',apply(){const m=someone('kairyo');if(m&&S.fresh>=2){const v=Math.min(4,Math.floor(S.fresh));S.fresh=r1(S.fresh-v);S.pres+=v+2;return`${m.name}が炉端で燻した、生鮮 −${v}、保存食 +${v+2}`}return'燻し方を知る者がいなかった'}},
+    {title:'氷室',body:'凍った川から大きな氷を切り出せそうだ。',apply(){const m=someone('hozon');if(m){S.springGuard=(S.springGuard||0)+.2;return`${m.name}が氷室を作った、次の春の生鮮の傷み −20%`}return'氷を活かせる者がいなかった'}},
+    {title:'雪原の足跡',body:'新雪に大きな獣の足跡が続いている。',apply(){const m=someone('shuryo');if(m){S.fresh+=6;return`${m.name}が足跡を追って仕留めた、生鮮 +6`}return'追える者がいなかった'}},
+    {title:'煙突の詰まり',body:'煙が部屋にこもって目が痛い。',apply(){const m=someone('kenchiku')||someone('mokko');if(m)return`${m.name}が屋根に上って煤を落とした`;const v=Math.min(S.wood,2);S.wood=r1(S.wood-v);return`余計に火を焚いた、燃料 −${v}`}},
+    {title:'春の兆し',body:'軒のつららから雫が落ち始めた。',apply(){S.weak=Math.max(0,S.weak-1);S.nextApDelta+=1;return'衰弱 −1、次のターン働ける者のAP +1'}},
+    {title:'ヤギの咳',body:'ヤギが苦しそうに咳をしている。',apply(){if(!S.goats)return'ヤギはいない';const m=someone('bokuchiku')||someone('chikusan');if(m)return`${m.name}が薬草を煎じて飲ませ、持ち直した`;S.goats--;return'1頭が冷たくなっていた、ヤギ −1'}},
+  ],
+};
+
+/* ---------- 進行 ---------- */
+async function act(a,m){
+  const ok=a.ok?a.ok():true;
+  if(busy||S.phase!=='play'||m.ap<a.cost||ok!==true)return;
+  m.ap-=a.cost;
+  if(a.anim){busy=true;render();await a.anim(m);busy=false}else{a.run(m);sfx(ACT_SFX[a.name]||'tap')}
+  if(m.ap<=0){const j=S.family.findIndex(x=>x.ap>0);if(j>=0)sel=j}
+  render();autoEnd();
+}
+function canAct(m){return m.ap>0&&catalog(m).some(a=>canDo(m,a)&&m.ap>=a.cost&&(a.ok?a.ok()===true:true))}
+let autoTimer=null;
+function autoEnd(atStart){
+  clearTimeout(autoTimer);
+  if(S.phase!=='play'||busy||S.family.some(canAct))return;
+  if(atStart){render();sfx('event');
+    modal({k:`第${S.year}年 ${SJP[season(S.turn)]} ・ ターン ${S.turn}`,title:'誰も動けなかった',
+      body:`このターンは家族の誰も行動することができなかった。${S.nextApDelta<0?'<br>出来事のせいで、働ける者のAPが尽きている。':''}<br>そのまま次のターンへ進む。`,
+      options:[{label:'続ける',main:true,onPick(){if(S.phase==='play')endTurn()}}]});return}
+  busy=true;render();
+  autoTimer=setTimeout(()=>{busy=false;if(S.phase==='play')endTurn()},700);
+}
+
+async function endTurn(){
+  if(busy)return;busy=true;sfx('end');render();
+  const t=S.turn;
+  if(season(t)==='winter'){winterConsume();sfx('eat');render();await wait(900);
+    if(S.starve){const st=S.starve;S.starve=null;
+      await new Promise(r=>modal({k:`第${S.year}年 冬 ・ ターン ${t}`,title:'ヤギが飢えた',body:`餌が足りずヤギ${st.d}頭が死んだ。<br><b>生鮮 ${st.meat} を手に入れた。</b><br>残るヤギは${S.goats}頭。`,options:[{label:'続ける',main:true,onPick:r}]}))}}
+  if(t===6){
+    const sf=S.tiles.filter(x=>x.type==='field'&&x.sown),sown=sf.length,v=sf.reduce((a,t)=>a+harvestOf(t),0),wl=S.tiles.filter(x=>x.type==='woodlot').reduce((a,t)=>a+woodlotOf(t),0);
+    S.fresh+=v;S.wood=r1(S.wood+wl);S.harvested=true;
+    log(`<b>秋の収穫</b> 種をまいた畑${sown}枚から生鮮 +${v}${wl?`、薪炭林から燃料 +${wl}`:''}`);sfx('harvest');render();await wait(900);
+    const sr=smokeRate();if(sr>0&&S.fresh>=1){const c=Math.floor(S.fresh*sr);if(c>0){S.fresh=r1(S.fresh-c);S.pres+=c;log(`<b>燻製小屋</b> 生鮮${c}を保存食にした（${Math.round(sr*100)}%）`);sfx('preserve');render();await wait(700)}}
+  }
+  S.nextApDelta=0;
+  if(checkDeath()){busy=false;return}
+  await deathNotice();
+  if(t!==6&&t!==9&&Math.random()<EVENT_RATE)runEvent(advance);else advance();
+}
+
+function winterConsume(){
+  const need=famFood();
+  const eat=n=>{const f=Math.min(S.fresh,n);S.fresh=r1(S.fresh-f);n=r1(n-f);const p=Math.min(S.pres,n);S.pres=r1(S.pres-p);return r1(n-p)};
+  let rest=eat(need);
+  let msg=`食料 −${r1(need)}`;
+  if(S.goats>0){const g=eat(goatFood());msg+=`、ヤギの餌 −${r1(goatFood())}`;
+    if(g>0){const d=Math.min(S.goats,Math.ceil(g));S.goats-=d;S.fresh+=3*d;S.starve={d,meat:3*d};sfx('bleat');msg+=` <b>餌が足りずヤギが${d}頭死んだ</b>（肉が残り生鮮 +${3*d}）`}}
+  if(rest>0){const before=rest;rest=eat(rest);if(rest<before)msg+=`、ヤギの肉で ${r1(before-rest)} 補った`}
+  if(rest>0){S.weak+=weakGain(rest);msg+=` <b>食料が${rest}足りない</b>`}
+  const wn=woodPer();const w=Math.min(S.wood,wn);S.wood=r1(S.wood-w);const wr=r1(wn-w);
+  msg+=`、燃料 −${r1(wn)}`;
+  if(wr>0){S.weak+=weakGain(wr);msg+=` <b>燃料が${wr}足りない</b>`}
+  const rot=r1(S.fresh*rotRate());if(rot>0){S.fresh=r1(S.fresh-rot);msg+=`、腐りの風で生鮮が${rot}傷んだ`}
+  log(msg);
+}
+
+function checkDeath(){
+  while(S.weak>=weakLimit()&&S.family.length){
+    const rank=m=>isOld(m)?0:!m.adult?1:2;
+    const i=S.family.map((m,j)=>[rank(m),isOld(m)?-(m.years||0):(m.years||0),j]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])[0][2];
+    const m=S.family.splice(i,1)[0];S.weak-=weakLimit();sfx('death');log(`<b>${m.name}が冬を越せなかった</b>`);(S.dead=S.dead||[]).push(m);
+  }
+  sel=Math.min(sel,Math.max(0,S.family.length-1));
+  if(!S.family.length){S.dead=[];render();finish(true);return true}
+  return false;
+}
+function deathNotice(){
+  const d=S.dead||[];if(!d.length)return Promise.resolve();S.dead=[];render();
+  return new Promise(r=>modal({k:`第${S.year}年 ${SJP[season(S.turn)]} ・ ターン ${S.turn}`,title:d.length>1?'家族を失った':`${d[0].name}が冬を越せなかった`,
+    body:`${d.map(m=>`<b>${m.name}</b>（${role(m)}${m.skills.length?`・${m.skills.map(k=>SKILLS[k]).join('・')}`:''}）`).join('<br>')}<br>衰弱が限界に達し、息を引き取った。<br>残る家族は${S.family.length}人。衰弱は ${S.weak}/${weakLimit()}。`,
+    options:[{label:'続ける',main:true,onPick:r}]}))}
+
+function runEvent(done){
+  S.evYear=S.evYear||[];const pool=EVENTS[season(S.turn)].filter(e=>!S.evYear.includes(e.title));const ev=pick(pool.length?pool:EVENTS[season(S.turn)]);S.evYear.push(ev.title);sfx('event');
+  const k=`第${S.year}年 ${SJP[season(S.turn)]} ・ ターン ${S.turn}`;
+  if(ev.choices){
+    modal({k,title:ev.title,body:ev.body,options:ev.choices.map(c=>({label:c.label,sub:typeof c.sub==='function'?c.sub():c.sub,disabled:c.ok&&!c.ok(),
+      onPick(){const r=c.apply();log(`<b>${ev.title}</b> ${r}`);render();if(!checkDeath())deathNotice().then(done)}}))});
+  }else{
+    const r=ev.apply();log(`<b>${ev.title}</b> ${r}`);render();
+    modal({k,title:ev.title,body:`${ev.body}<br><b>${r}</b>`,options:[{label:'続ける',main:true,onPick(){if(!checkDeath())deathNotice().then(done)}}]});
+  }
+}
+
+function advance(){
+  busy=false;
+  if(S.turn===9){yearEnd();return}
+  S.turn++;
+  if(S.turn===4)log('<b>秋になった</b>');
+  if(S.turn===7){S.harvested=false;log('<b>冬が来た</b> 冬のあいだは勉学で新しい技術を学べる')}
+  startTurn();
+}
+function startTurn(){
+  S.phase='play';S.milkedPairs=0;
+  S.family.forEach(m=>m.ap=memberMax(m));
+  const j=S.family.findIndex(m=>m.ap>0);sel=j>=0?j:0;render();autoEnd(true);
+}
+function showFacilities(){
+  const done=S.harvested||season(S.turn)==='winter'||S.phase==='spring';
+  const fields=S.tiles.filter(t=>t.type==='field'),sown=fields.filter(t=>t.sown&&!done);
+  const harvest=sown.reduce((a,t)=>a+harvestOf(t),0);
+  const woods=S.tiles.filter(t=>t.type==='woodlot'),fuel=woods.reduce((a,t)=>a+woodlotOf(t),0);
+  const smokes=S.tiles.filter(t=>t.type==='smoke'),sr=smokeRate();
+  const freshAfter=S.fresh+(done?0:harvest),conv=Math.floor(freshAfter*sr);
+  const pens=count('pasture'),groves=count('grove'),pairs=Math.floor(S.goats/2);
+  const lv=ts=>ts.length?`<small>${ts.map(t=>'Lv'+(t.lv||0)).join('・')}</small>`:'';
+  const row=(name,sub,val)=>`<tr><td>${name}${sub}</td><td>${val}</td></tr>`;
+  const body=`${done?'今年の秋の終わりはもう過ぎた。<b>次の秋</b>に今の施設で起きることの見込み。':'今の施設のまま<b>秋の終わり</b>を迎えたときの見込み。'}
+  <table class="fac" style="margin-top:8px">
+    ${row(`畑 ${fields.length}枚`,`<small>${done?'夏に種をまいた畑だけが実る':`種まき済 ${sown.length}枚・未 ${fields.length-sown.length}枚`}・1枚 ${harvestPer()}＋Lv×3</small>${lv(fields)}`,done?`最大 生鮮 +${fields.reduce((a,t)=>a+harvestOf(t),0)}`:`生鮮 +${harvest}`)}
+    ${row(`薪炭林 ${woods.length}か所`,`<small>1か所 3＋Lv×3</small>${lv(woods)}`,`燃料 +${fuel}`)}
+    ${row(`燻製小屋 ${smokes.length}軒`,`<small>生鮮の ${Math.round(sr*100)}% を保存食に（1軒20%＋Lv×10%）${done?'':`・収穫後の生鮮 約${r1(freshAfter)}`}</small>${lv(smokes)}`,sr?(done?`${Math.round(sr*100)}%`:`保存食 +${conv}`):'—')}
+    ${row(`牧場 ${pens}・林間放牧地 ${groves}`,`<small>ヤギ ${S.goats}/${goatCap()}頭・番${pairs}組。春に番ごと60%で子ヤギ</small>`,`春 子ヤギ 約${r1(Math.min(Math.max(0,goatCap()-S.goats),pairs*.6))}`)}
+  </table>
+  <div style="margin-top:8px;font-size:12px">収穫と燻製小屋は秋の最終ターンの終わりに、この順で起きる。</div>`;
+  modal({k:'施設効果',title:'秋の終わりの見込み',body,options:[{label:'閉じる',main:true,onPick(){}}]});
+}
+
+function yearEnd(){
+  const gone=[];
+  [...S.family].forEach(m=>{if(!m.adult)return;const c=deathChance({...m,years:(m.years||0)+1});
+    if(c&&Math.random()<c){S.family.splice(S.family.indexOf(m),1);gone.push(m);log(`<b>${m.name}が天寿を全うした</b>（大人になって${m.years}年）`)}});
+  const honor=gone.reduce((a,m)=>a+HONOR_PER*(m.years||0),0);
+  const score=()=>{
+    if(!S.family.length){if(honor){S.winterScores.push(honor);log(`天寿の誉れ 得点 +${honor}`)}render();finish(true);return}
+    const base=10*S.year+3*S.family.length,gain=base+honor;S.winterScores.push(gain);
+    log(`<b>第${S.year}の冬を越えた</b> 得点 +${gain}${honor?`（天寿の誉れ +${honor} を含む）`:''}`);sfx('birth');
+    modal({k:`第${S.year}年`,title:'冬を越えた',body:`家族${S.family.length}人で雪解けを迎えた。<br><b>得点 +${gain}</b>（${10*S.year} + 家族${S.family.length}人×3${honor?` + 天寿の誉れ ${honor}`:''}）<br>保存食${S.pres}と燃料${S.wood}を持ち越す。生鮮${S.fresh}は春に${Math.round(springRot()*100)}%が傷む。<br>次の冬は今年の1.2倍きびしい。`,
+      options:[{label:'春を迎える',main:true,onPick(){S.year++;spring()}}]});
+  };
+  if(!gone.length){score();return}
+  sel=0;render();sfx('death');
+  modal({k:`第${S.year}年 冬の終わり`,title:gone.length>1?'天寿を全うした':`${gone[0].name}が天寿を全うした`,
+    body:`${gone.map(m=>`<b>${m.name}</b>（${role(m)}・大人になって${m.years}年${m.skills.length?`・${m.skills.map(k=>SKILLS[k]).join('・')}`:''}）`).join('<br>')}<br>雪解けを待たずに、静かに息を引き取った。<br><b>天寿の誉れ +${honor}</b>（大人として生きた1年につき${HONOR_PER}）<br>残る家族は${S.family.length}人。`,
+    options:[{label:'続ける',main:true,onPick:score}]});
+}
+
+function spring(){
+  S.news=[];if(S.fresh>0){const v=r1(S.fresh*springRot());S.fresh=r1(S.fresh-v);if(v>0){log(`春が来て、生鮮が${v}傷んだ`);S.news.push(`冬を越した生鮮のうち ${v} が傷んだ（${Math.round(springRot()*100)}%）。`)}}
+  S.springGuard=0;
+  S.weak=0;S.childThisYear=false;S.extraWood=0;S.harvestMod=0;S.weakBonus=0;S.evYear=[];S.turn=1;S.phase='spring';S.harvested=false;
+  S.tiles.forEach(t=>t.sown=false);
+  S.family.forEach(m=>{m.age++;if(m.adult)m.years=(m.years||0)+1});
+  S.family.forEach(m=>{if(isOld(m)&&m.years===OLD_AT){log(`${m.name}が老いて、夏と秋のAPが1減った`);S.news.push(`${m.name}が老いた。夏と秋のAPが1減る。`)}});
+  sel=0;
+  if(!S.fate){
+    const bp=Object.keys(BOONS),tp=Object.keys(TRIALS);
+    const b=bp.length?pick(bp):null,t=tp.length?pick(tp):null;
+    S.fate={b,t};
+  }
+  render();showFate();
+}
+function springEffects(){
+  S.family.forEach(m=>{if(!m.adult&&m.age>=1){m.adult=true;m.years=0;const k=learn(m);log(`<b>${m.name}が大人になり「${SKILLS[k]}」を覚えた</b>`)}});
+  if(has('nezumi')){const v=Math.floor(S.pres*(1-Math.pow(0.8,mc('nezumi'))));if(v){S.pres-=v;log(`鼠に保存食を${v}かじられた`)}}
+  if(has('kura')){S.pres+=5*mc('kura');log(`深い蔵から保存食 +${5*mc('kura')}`)}
+  if(has('ekibyo')&&S.goats>0){const d=Math.min(S.goats,mc('ekibyo'));S.goats-=d;log(`家畜の病でヤギが${d}頭死んだ`)}
+  const pairs=Math.floor(S.goats/2);let born=0;
+  for(let i=0;i<pairs;i++)if(Math.random()<.6&&S.goats<goatCap()){S.goats++;born++}
+  if(born)log(`<b>子ヤギが${born}頭生まれた</b>`);
+}
+function showFate(){
+  const {b,t}=S.fate;
+  if(!b&&!t){S.fate=null;const go=()=>{springEffects();startTurn()};if((S.news||[]).length)modal({k:`第${S.year}年 春`,title:'春が来た',body:S.news.join('<br>'),options:[{label:'夏へ',main:true,onPick:go}]});else go();return}
+  sfx('fate');
+  modal({k:`第${S.year}年 春`,title:'女神が恩恵と試練を同時に授ける',
+    body:`${(S.news||[]).length?`<div style="margin-bottom:8px"><b>${S.news.join('<br>')}</b></div>`:''}<div class="fate">
+      ${b?`<div class="card boon"><span class="ty">恩恵</span><span class="cn2">${BOONS[b].name}${mc(b)?`<small style="font-size:12px"> 重ねて${mc(b)+1}つ目</small>`:''}</span><span class="ds">${BOONS[b].desc}</span></div>`:'<div class="card boon"><span class="ty">恩恵</span><span class="ds">もう授けるものはない</span></div>'}
+      ${t?`<div class="card trial"><span class="ty">試練</span><span class="cn2">${TRIALS[t].name}${mc(t)?`<small style="font-size:12px"> 重ねて${mc(t)+1}つ目</small>`:''}</span><span class="ds">${TRIALS[t].desc}</span></div>`:'<div class="card trial"><span class="ty">試練</span><span class="ds">もう課すものはない</span></div>'}</div>
+      <div style="margin-top:8px">どちらもこの先ずっと続き、同じものは効果が重なる。拒むことはできない。</div>`,
+    options:[{label:'受け入れて夏へ',main:true,onPick(){
+      if(b)S.boons.push(b);if(t)S.trials.push(t);S.fate=null;
+      log(`${b?`恩恵<b>「${BOONS[b].name}」</b>`:''}${b&&t?'と':''}${t?`試練<b>「${TRIALS[t].name}」</b>`:''}を授かった`);
+      springEffects();startTurn();}}]});
+}
+
+function finalScore(){
+  const w=S.winterScores.reduce((a,b)=>a+b,0),land=S.tiles.length*6,up=S.tiles.reduce((a,t)=>a+(t.lv||0),0)*5,goats=S.goats*3;
+  return{w,land,up,goats,total:w+land+up+goats};
+}
+function finish(dead){
+  S.phase='over';busy=false;const f=finalScore();render();
+  let best=0;try{best=+localStorage.getItem('ettou-best')||0;if(f.total>best)localStorage.setItem('ettou-best',f.total)}catch(_){}
+  sfx('death');
+  const won=S.winterScores.length;
+  modal({k:`第${S.year}年 冬`,title:'一家は絶えた',
+    body:`${won}度の冬を越えた。${f.total>best&&best?'<b>これまでの最高記録を更新した。</b>':best?`これまでの最高は ${best}。`:''}<table class="sc" style="margin-top:6px">
+      <tr><td>越えた冬 ${won}回の得点</td><td>${f.w}</td></tr>
+      <tr><td>拓いた土地 ${S.tiles.length} × 6</td><td>${f.land}</td></tr>
+      <tr><td>改良 ${f.up/5} 段階 × 5</td><td>${f.up}</td></tr>
+      <tr><td>ヤギ ${S.goats} × 3</td><td>${f.goats}</td></tr>
+      <tr class="tot"><td>最終得点</td><td>${f.total}</td></tr></table>
+      ${SB.on?sbFormHTML():'<div id="rkStatus" class="rkst">ランキングに送信中…</div>'}`,
+    options:[{label:'もう一度遊ぶ',main:true,onPick(){newGame()}},{label:'ランキングを見る',onPick(){showRanking()}},{label:'タイトルへ',onPick(){showTitle()}}]});
+  if(SB.on){sbWireForm(f,won);return}
+  const put=r=>{const el=document.getElementById('rkStatus');if(el)el.innerHTML=rkStatusHTML(r)};
+  if(S.rk){put(S.rk);return}
+  rkSubmit(f,won).then(r=>{S.rk=r;put(r)});
+}
+
+/* ---------- ランキング ---------- */
+const RK={db:null,user:null,uid:null,tried:false};
+const rkReady=(async()=>{try{
+  if(!window.claude||!window.claude.use)return;
+  const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+  RK.db=db;RK.user=user;if(user){try{RK.uid=await user.id()}catch(_){}}
+}catch(_){}})();
+const rkTimeout=(p,ms=10000)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej({code:'timeout'}),ms))]);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function rkTop(n=20){
+  await rkReady;if(!RK.db)return null;
+  const q=await rkTimeout(RK.db.collection('scores').orderBy('score','desc').limit(n).get());
+  return q.docs.filter(d=>d.exists!==false).map(d=>({id:d.id,...d.data()}));
+}
+async function rkNames(ids){
+  const out={};if(!RK.user||!ids.length)return out;
+  try{const ps=await RK.user.profiles(ids);ids.forEach(id=>{out[id]=(ps[id]&&ps[id].name)||'名無しの開拓者'})}catch(_){ids.forEach(id=>out[id]='名無しの開拓者')}
+  return out;
+}
+async function rkSubmit(f,won){
+  await rkReady;
+  if(!RK.db||!RK.uid)return{state:'off'};
+  try{
+    const ref=RK.db.doc('scores/'+RK.uid);
+    const cur=await rkTimeout(ref.get());const prevBest=cur.exists?(cur.data().score||0):0;
+    let updated=false;
+    if(f.total>prevBest){await rkTimeout(ref.set({score:f.total,winters:won,year:S.year,at:Date.now()}));updated=true}
+    const top=await rkTop(50);const rank=top?top.findIndex(r=>r.id===RK.uid)+1:0;
+    return{state:'ok',updated,prevBest,rank};
+  }catch(e){return{state:e&&e.code==='invalid_argument'?'readonly':'error'}}
+}
+function rkStatusHTML(r){
+  if(r.state==='off')return'ランキングはこの画面では使えない（サインインが必要）。';
+  if(r.state==='readonly')return'閲覧のみの権限のため、ランキングには記録できない。';
+  if(r.state==='error')return'ランキングに接続できなかった。';
+  const rk=r.rank?`現在 <b>${r.rank}位</b>`:'50位圏外';
+  return r.updated?`<b>自己ベストを更新し、ランキングに記録した。</b> ${rk}`:`自己ベスト ${r.prevBest} には届かなかった。${rk}`;
+}
+async function showRanking(){
+  if(SB.on)return sbShowRanking();
+  modal({k:'みんなの記録',title:'ランキング',body:'<div id="rkBody" class="num">読み込み中…</div>',options:[{label:'閉じる',main:true,onPick(){}}]});
+  const box=()=>document.getElementById('rkBody');
+  try{
+    const top=await rkTop(20);
+    if(!box())return;
+    if(top===null){box().textContent='ランキングはこの画面では使えない（サインインが必要）。';return}
+    if(!top.length){box().textContent='まだ記録がない。最初の一家になろう。';return}
+    const names=await rkNames(top.map(r=>r.id));
+    if(!box())return;
+    box().className='';
+    box().innerHTML=`<table class="sc rk">${top.map((r,i)=>`<tr class="${r.id===RK.uid?'me':''}"><td>${i+1}</td><td>${esc(names[r.id]||'名無しの開拓者')}${r.id===RK.uid?' <small>（あなた）</small>':''}<small>${r.winters??'?'}度の冬</small></td><td>${r.score}</td></tr>`).join('')}</table>
+      <div class="num" style="margin-top:6px">1人につき自己ベストの1件を表示</div>`;
+  }catch(e){if(box())box().textContent='ランキングを読み込めなかった。時間をおいて開き直してください。'}
+}
+
+/* ---------- 共有ランキング（GitHub Pages版：Supabase） ---------- */
+const SB={
+  base:'https://yxtmqwkjrstfppvmjczz.supabase.co/rest/v1/agrifamilie_scores',
+  key:'sb_publishable_UB3QgJ1ifAtHiHNOGvrGYg_EL-wcfm3',
+  // claude.ai の中では外部と通信できないので、ページ自身のランキング（db）を使う
+  on:!(window.claude&&window.claude.use),
+};
+async function sbFetch(q,opt={}){
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),10000);
+  try{
+    const r=await fetch(SB.base+q,{...opt,signal:ctl.signal,headers:{apikey:SB.key,Authorization:'Bearer '+SB.key,'Content-Type':'application/json',...(opt.headers||{})}});
+    if(!r.ok)throw{code:'http',status:r.status};
+    const tx=await r.text();return tx?JSON.parse(tx):null;
+  }finally{clearTimeout(t)}
+}
+const sbTop=(n=20)=>sbFetch(`?select=name,score,winters,created_at&order=score.desc,created_at.asc&limit=${n}`);
+async function sbSubmit(name,f,won){
+  await sbFetch('',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({name,score:f.total,winters:won,year:S.year})});
+}
+function sbErrText(e){return e&&e.status?`ランキングサーバーに接続できなかった（${e.status}）。`:'ランキングサーバーに接続できなかった。通信状況を確かめてください。'}
+function sbFormHTML(){
+  let nm='';try{nm=localStorage.getItem('agri-name')||''}catch(_){}
+  return`<div class="rkst"><div style="margin-bottom:6px">名前を入れて、みんなのランキングに登録できる。</div>
+    <form id="sbForm" class="sbform"><input id="sbName" maxlength="12" placeholder="名前（12文字まで）" value="${esc(nm)}" autocomplete="nickname"><button type="submit" id="sbGo">登録する</button></form>
+    <div id="sbMsg" class="num" style="margin-top:6px"></div></div>`;
+}
+function sbWireForm(f,won){
+  const form=document.getElementById('sbForm');if(!form)return;
+  form.addEventListener('submit',async e=>{e.preventDefault();
+    const inp=document.getElementById('sbName'),btn=document.getElementById('sbGo'),msg=document.getElementById('sbMsg');
+    const name=inp.value.trim().slice(0,12);if(!name){msg.textContent='名前を入れてください。';inp.focus();return}
+    if(S.sbDone)return;
+    btn.disabled=true;btn.textContent='送信中…';
+    try{localStorage.setItem('agri-name',name)}catch(_){}
+    try{await sbSubmit(name,f,won);S.sbDone=true;btn.textContent='登録済み';inp.disabled=true;
+      let rank='';try{const top=await sbTop(100);const i=top.findIndex(r=>r.name===name&&r.score===f.total);rank=i>=0?`いま ${i+1}位。`:'100位圏外。'}catch(_){}
+      msg.innerHTML=`<b>登録した。</b>${rank}`;sfx('learn');
+    }catch(err){btn.disabled=false;btn.textContent='登録する';msg.textContent=sbErrText(err)}
+  });
+}
+async function sbShowRanking(){
+  modal({k:'みんなの記録',title:'ランキング',body:'<div id="rkBody" class="num">読み込み中…</div>',options:[{label:'閉じる',main:true,onPick(){}}]});
+  const box=()=>document.getElementById('rkBody');
+  try{
+    const top=await sbTop(20);if(!box())return;
+    if(!top.length){box().textContent='まだ登録がない。最初の一家になろう。';return}
+    let me='';try{me=localStorage.getItem('agri-name')||''}catch(_){}
+    box().className='';
+    const tb=document.createElement('table');tb.className='sc rk';
+    top.forEach((r,i)=>{const tr=document.createElement('tr');if(me&&r.name===me)tr.className='me';
+      const a=document.createElement('td');a.textContent=i+1;
+      const b=document.createElement('td');b.textContent=r.name;const sm=document.createElement('small');sm.textContent=`${r.winters??'?'}度の冬`;b.appendChild(sm);
+      const c=document.createElement('td');c.textContent=r.score;tr.append(a,b,c);tb.appendChild(tr)});
+    box().replaceChildren(tb);
+  }catch(e){if(box())box().textContent=sbErrText(e)}
+}
+
+/* ---------- 音 ---------- */
+const AU={ctx:null,on:true,cur:null,def:null,next:0,step:0,wind:null};
+try{AU.on=localStorage.getItem('agri-sound')!=='off'}catch(_){}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function auInit(){
+  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
+  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+  const c=AU.ctx=new C();
+  AU.master=c.createGain();AU.master.gain.value=AU.on?.9:0;AU.master.connect(c.destination);
+  AU.music=c.createGain();AU.music.gain.value=0;AU.sfxBus=c.createGain();AU.sfxBus.gain.value=.65;
+  const d=c.createDelay();d.delayTime.value=.3;const fb=c.createGain();fb.gain.value=.3;const lp=c.createBiquadFilter();lp.frequency.value=2000;const wet=c.createGain();wet.gain.value=.28;
+  AU.music.connect(AU.master);AU.music.connect(d);d.connect(lp);lp.connect(fb);fb.connect(d);lp.connect(wet);wet.connect(AU.master);
+  AU.sfxBus.connect(AU.master);
+  const len=c.sampleRate*2,buf=c.createBuffer(1,len,c.sampleRate),ch=buf.getChannelData(0);for(let i=0;i<len;i++)ch[i]=Math.random()*2-1;AU.noise=buf;
+  setInterval(auTick,50);
+}
+function env(g,t,vol,a,dur){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+dur)}
+function tone(dest,t,m,dur,o={}){
+  const c=AU.ctx,osc=c.createOscillator(),g=c.createGain();osc.type=o.type||'triangle';osc.frequency.setValueAtTime(hz(m),t);
+  if(o.slide)osc.frequency.exponentialRampToValueAtTime(hz(m+o.slide),t+dur);
+  if(o.detune)osc.detune.value=o.detune;
+  let src=osc;if(o.lp){const f=c.createBiquadFilter();f.frequency.value=o.lp;osc.connect(f);src=f}
+  if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=5.2;lg.gain.value=o.vib;l.connect(lg);lg.connect(osc.frequency);l.start(t);l.stop(t+dur+.1)}
+  src.connect(g);env(g,t,o.vol??.2,o.a??.005,dur);g.connect(dest);osc.start(t);osc.stop(t+dur+.05);
+}
+function pad(t,ms,dur,vol=.05,cut=900){
+  const c=AU.ctx;ms.forEach(m=>[-7,7].forEach(dt=>{const o=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain();o.type='sawtooth';o.frequency.value=hz(m);o.detune.value=dt;f.frequency.value=cut;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+dur*.35);g.gain.linearRampToValueAtTime(vol*.8,t+dur*.8);g.gain.linearRampToValueAtTime(0,t+dur);
+    o.connect(f);f.connect(g);g.connect(AU.music);o.start(t);o.stop(t+dur+.05)}));
+}
+function noiseHit(dest,t,dur,freq,vol,q=1,type='bandpass'){
+  const c=AU.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=AU.noise;f.type=type;f.frequency.value=freq;f.Q.value=q;
+  s.connect(f);f.connect(g);env(g,t,vol,.003,dur);g.connect(dest);s.start(t,Math.random());s.stop(t+dur+.05);
+}
+const pluck=(t,m,v=.12)=>tone(AU.music,t,m,.7,{type:'triangle',vol:v});
+const bell=(t,m,v=.1,dest)=>{dest=dest||AU.music;tone(dest,t,m,1.8,{type:'sine',vol:v});tone(dest,t,m+19,.6,{type:'sine',vol:v*.25})};
+const flute=(t,m,dur,v=.09)=>tone(AU.music,t,m,dur,{type:'sine',vol:v,a:.07,vib:3});
+const bass=(t,m,dur,v=.14)=>tone(AU.music,t,m,dur,{type:'triangle',vol:v,a:.02,lp:500});
+const tri=r=>[r,r+(r%12===9||r%12===2||r%12===4?3:4),r+7];
+function chordTones(r,minor){return[r,r+(minor?3:4),r+7]}
+
+/* 曲：16分音符単位のループ */
+const TRACKS={
+  summer:{bpm:108,bars:8,chords:[[48,0],[43,0],[45,1],[41,0],[48,0],[43,0],[45,1],[41,0]],
+    mel:[[[0,76,4],[4,79,4],[8,81,2],[10,79,2],[12,76,4]],[[0,74,6],[6,76,2],[8,74,4],[12,71,4]],[[0,72,4],[4,76,4],[8,81,8]],[[0,79,4],[4,77,4],[8,76,4],[12,74,4]],
+         [[0,76,2],[2,79,2],[4,84,4],[8,81,4],[12,79,4]],[[0,86,4],[4,83,4],[8,79,8]],[[0,81,4],[4,79,4],[8,76,4],[12,72,4]],[[0,74,4],[4,76,4],[8,72,8]]],
+    play(b,s,t,sd){const[r,mi]=this.chords[b],ct=chordTones(r,mi);
+      if(s%2===0)pluck(t,ct[[0,1,2,1][(s/2)%4]]+24,.06);
+      if(s===0||s===8)bass(t,r,sd*7);
+      if(s%4===2)noiseHit(AU.music,t,.05,7000,.025,1,'highpass');
+      this.mel[b].forEach(([st,m,l])=>{if(st===s)tone(AU.music,t,m,sd*l*1.1,{type:'triangle',vol:.075,a:.01,vib:2})})}},
+  autumn:{bpm:84,bars:8,chords:[[50,1],[48,0],[46,0],[45,0],[50,1],[48,0],[46,0],[45,0]],
+    mel:[[[0,69,6],[6,72,2],[8,74,8]],[[0,76,4],[4,74,4],[8,72,8]],[[0,74,4],[4,77,4],[8,76,4],[12,74,4]],[[0,73,8],[8,76,8]],
+         [[0,77,6],[6,76,2],[8,74,8]],[[0,79,4],[4,76,4],[8,72,8]],[[0,77,4],[4,74,4],[8,70,8]],[[0,69,16]]],
+    play(b,s,t,sd){const[r,mi]=this.chords[b],ct=chordTones(r,mi);
+      if(s%2===0)pluck(t,[ct[0]+12,ct[2]+12,ct[0]+24,ct[1]+24,ct[2]+24,ct[1]+24,ct[0]+24,ct[2]+12][s/2],.06);
+      if(s===0)bass(t,r-12,sd*15,.13);
+      this.mel[b].forEach(([st,m,l])=>{if(st===s)flute(t,m,sd*l*1.05)})}},
+  winter:{bpm:60,bars:4,chords:[[45,1],[41,0],[48,0],[43,0]],wind:true,
+    bells:[[[0,76],[6,72],[12,69]],[[4,77],[10,72]],[[0,79],[8,76]],[[2,74],[10,71],[14,79]]],
+    play(b,s,t,sd){const[r,mi]=this.chords[b];
+      if(s===0){pad(t,chordTones(r+12,mi),sd*16,.035,700);bass(t,r-12,sd*15,.1)}
+      this.bells[b].forEach(([st,m])=>{if(st===s)bell(t,m+12,.06)})}},
+  title:{bpm:80,bars:4,chords:[[41,0],[48,0],[50,1],[46,0]],
+    bells:[[[0,77],[2,81],[4,84],[8,81],[12,77]],[[0,79],[4,76],[6,79],[8,84],[12,79]],[[0,81],[4,77],[8,74],[12,77]],[[0,82],[4,81],[8,79],[12,77]]],
+    play(b,s,t,sd){const[r,mi]=this.chords[b];
+      if(s===0){pad(t,chordTones(r+12,mi),sd*16,.025,800);bass(t,r,sd*15,.1)}
+      if(s%4===2)pluck(t,chordTones(r,mi)[(s/4|0)%3]+24,.04);
+      this.bells[b].forEach(([st,m])=>{if(st===s)bell(t,m,.08)})}},
+  over:{bpm:54,bars:4,chords:[[40,1],[48,0],[45,1],[47,0]],
+    bells:[[[0,79],[8,76]],[[0,76],[8,72]],[[0,72],[8,69]],[[0,71],[6,75],[12,71]]],
+    play(b,s,t,sd){const[r,mi]=this.chords[b];
+      if(s===0){pad(t,chordTones(r+12,mi),sd*16,.04,600);bass(t,r-12,sd*15,.12)}
+      this.bells[b].forEach(([st,m])=>{if(st===s)bell(t,m,.09)})}},
+};
+function auTick(){
+  const c=AU.ctx;if(!c||!AU.def)return;
+  const sd=60/AU.def.bpm/4;
+  while(AU.next<c.currentTime+.25){
+    const b=Math.floor(AU.step/16)%AU.def.bars,s=AU.step%16;
+    try{AU.def.play(b,s,AU.next,sd)}catch(_){}
+    AU.step++;AU.next+=sd;
+  }
+}
+function setTrack(name){
+  if(!AU.ctx||AU.cur===name)return;
+  AU.cur=name;AU.def=TRACKS[name];AU.step=0;
+  const c=AU.ctx,t=c.currentTime;
+  AU.music.gain.cancelScheduledValues(t);AU.music.gain.setValueAtTime(0,t);AU.music.gain.linearRampToValueAtTime(.55,t+1.2);
+  AU.next=t+.15;
+  if(AU.def.wind&&!AU.wind){const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain(),l=c.createOscillator(),lg=c.createGain();
+    s.buffer=AU.noise;s.loop=true;f.type='bandpass';f.frequency.value=500;f.Q.value=.8;g.gain.value=.03;l.frequency.value=.13;lg.gain.value=300;l.connect(lg);lg.connect(f.frequency);
+    s.connect(f);f.connect(g);g.connect(AU.music);s.start();l.start();AU.wind={s,l}}
+  else if(!AU.def.wind&&AU.wind){AU.wind.s.stop();AU.wind.l.stop();AU.wind=null}
+}
+function updateMusic(){
+  if(!AU.ctx)return;
+  const name=S.phase==='title'||S.phase==='spring'?'title':S.phase==='over'?'over':season(S.turn);
+  setTrack(name);
+}
+function setSound(on,init=true){
+  AU.on=on;if(init){try{localStorage.setItem('agri-sound',on?'on':'off')}catch(_){}}
+  if(on&&init)auInit();
+  if(AU.ctx){const t=AU.ctx.currentTime;AU.master.gain.cancelScheduledValues(t);AU.master.gain.linearRampToValueAtTime(on?.9:0,t+.2)}
+  document.querySelectorAll('[data-snd]').forEach(b=>{b.textContent=on?'音 オン':'音 オフ';b.setAttribute('aria-pressed',on)});
+}
+function sfx(name){
+  const c=AU.ctx;if(!c||!AU.on)return;const t=c.currentTime+.01,D=AU.sfxBus;
+  const T=(m,dur,o)=>tone(D,t+(o&&o.at||0),m,dur,o);
+  switch(name){
+    case'tap':T(88,.06,{type:'sine',vol:.08});break;
+    case'gather':T(79,.25,{vol:.12});T(84,.3,{vol:.12,at:.08});break;
+    case'wood':noiseHit(D,t,.08,900,.5,2);noiseHit(D,t+.16,.1,700,.5,2);T(45,.12,{vol:.2,at:.16});break;
+    case'tree':noiseHit(D,t,.25,1500,.35,1);noiseHit(D,t+.45,.4,300,.6,.7);T(36,.4,{vol:.3,at:.45,type:'sine'});break;
+    case'build':[0,.18,.36].forEach(a=>{noiseHit(D,t+a,.06,1200,.45,3);T(55,.08,{vol:.15,at:a})});break;
+    case'sow':[0,.1,.2].forEach((a,i)=>T(84+i*3,.15,{type:'sine',vol:.06,at:a}));break;
+    case'hunt':T(40,.25,{type:'sine',vol:.35,slide:-12});T(79,.4,{vol:.1,at:.2});T(86,.5,{vol:.1,at:.32});break;
+    case'fail':noiseHit(D,t,.45,1800,.25,.6);T(72,.35,{type:'sine',vol:.08,slide:-7,at:.1});break;
+    case'bleat':tone(D,t,66,.45,{type:'sawtooth',vol:.06,vib:25,lp:1600});break;
+    case'milk':[0,.12,.24].forEach((a,i)=>T(90-i*2,.1,{type:'sine',vol:.07,at:a,slide:5}));break;
+    case'preserve':bell(t,96,.06,D);noiseHit(D,t,.04,5000,.15,2);break;
+    case'learn':[72,76,79,84].forEach((m,i)=>bell(t+i*.09,m+12,.06,D));break;
+    case'upgrade':[79,83,86,91,95].forEach((m,i)=>bell(t+i*.06,m,.05,D));break;
+    case'event':bell(t,84,.08,D);bell(t+.18,79,.08,D);break;
+    case'harvest':[60,64,67,72,76].forEach((m,i)=>T(m+12,.5,{vol:.1,at:i*.08}));break;
+    case'eat':T(43,.3,{type:'sine',vol:.25});noiseHit(D,t,.1,400,.15,1);break;
+    case'death':bell(t,52,.18,D);bell(t+.9,47,.14,D);break;
+    case'birth':[72,76,79].forEach((m,i)=>bell(t+i*.15,m+12,.07,D));break;
+    case'fate':for(let i=0;i<8;i++)bell(t+i*.07,[84,88,91,96][i%4]+(i>3?-12:0),.04,D);break;
+    case'end':noiseHit(D,t,.05,2400,.35,6);T(81,.05,{type:'sine',vol:.08});break;
+    case'goat':tone(D,t,64,.35,{type:'sawtooth',vol:.05,vib:30,lp:1500});tone(D,t+.35,62,.45,{type:'sawtooth',vol:.05,vib:30,lp:1500});break;
+  }
+}
+const ACT_SFX={'採集':'gather','種まき':'sow','畑を作る':'build','薪割り':'wood','枝拾い':'wood','油搾り':'preserve','燻製づくり':'preserve','エサ罠':'tap','林間放牧地':'build','泥炭掘り':'wood','牧場を作る':'build','燻製小屋':'build','薪炭林を植える':'sow',
+  '乳搾り':'milk','畜殺':'eat','保存加工':'preserve','子をなす':'birth','勉学':'tap','罠猟':'tap','氷上釣り':'gather','畑の改良':'tap','燻製小屋の改良':'tap','薪炭林の手入れ':'tap'};
+
+/* ---------- 演出 ---------- */
+const NS='http://www.w3.org/2000/svg';
+function fxGroup(html){const g=document.createElementNS(NS,'g');g.innerHTML=html;$('scene').appendChild(g);return g}
+const anim=(el,k,o)=>RM()?Promise.resolve():el.animate(k,{fill:'forwards',easing:'ease-in-out',...o}).finished;
+const forestX=()=>forestLeft()>0?X0+(S.tiles.length+forestLeft()/2)*SW:388;
+
+async function walkOut(){
+  const tx=forestX()-20;
+  const hunter=fxGroup(person(0,16,'#1f2430')+`<path d="M4 136 L12 128" stroke="#5a3e2a" stroke-width="1.4"/>`);
+  await anim(hunter,[{transform:'translate(110px,0)'},{transform:`translate(${tx}px,0)`,opacity:1},{transform:`translate(${tx+20}px,0)`,opacity:0}],{duration:1100});
+  return tx+28;
+}
+const PREY=[{n:'野うさぎ',v:5,p:.5,draw:x=>bigRabbit(x)},{n:'鹿',v:10,p:.35,draw:x=>deerShape(x)},{n:'大猪',v:18,p:.15,draw:x=>boarShape(x)}];
+function rollPrey(){let r=Math.random();for(const p of PREY){if(r<p.p)return p;r-=p.p}return PREY[0]}
+async function huntAnim(m){
+  const ok=Math.random()<huntChance(),prey=rollPrey(),v=prey.v;
+  const x=Math.min(370,await walkOut());
+  const g=fxGroup(`<g>${prey.draw(x)}</g>`),d=g.firstChild;d.style.transformBox='fill-box';d.style.transformOrigin='50% 100%';
+  await anim(d,[{opacity:0},{opacity:1}],{duration:250});await wait(300);
+  if(ok){await anim(d,[{transform:'rotate(0)'},{transform:'rotate(90deg) translateY(-2px)',opacity:.85}],{duration:450});
+    sfx('hunt');if(v>=18)setTimeout(()=>sfx('harvest'),250);S.fresh+=v;log(`<b>${m.name}が${prey.n}を仕留めた</b> 生鮮 +${v}`);fxGroup(`<text class="fxt" x="${Math.min(x,350)}" y="116" text-anchor="middle">${prey.n} +${v}</text>`);}
+  else{await anim(d,[{transform:'translate(0,0)'},{transform:'translate(14px,-12px)',offset:.35},{transform:'translate(28px,0)',offset:.6},{transform:'translate(46px,-10px)',offset:.8},{transform:'translate(60px,0)',opacity:0}],{duration:700,easing:'linear'});
+    sfx('fail');log(`${m.name}は${prey.n}を追ったが逃げられた`);fxGroup(`<text class="fxt" x="${Math.min(x,350)}" y="116" text-anchor="middle">${prey.n}に逃げられた</text>`);}
+  await wait(800);
+}
+const penX=()=>{const i=S.tiles.findIndex(t=>t.type==='pasture'||t.type==='grove');return X0+Math.max(0,i)*SW+SW/2};
+async function goatAnim(m){
+  const ok=Math.random()<goatChance();
+  const x=Math.min(370,await walkOut());
+  const g=fxGroup(`<g>${goatShape(x,150,1.6)}</g>`),d=g.firstChild;d.style.transformBox='fill-box';d.style.transformOrigin='50% 100%';
+  await anim(d,[{opacity:0},{opacity:1}],{duration:250});await wait(300);
+  if(ok){
+    const px=penX();
+    fxGroup(`<text class="fxt" x="${x}" y="116" text-anchor="middle">捕まえた</text>`);
+    await anim(d,[{transform:'translate(0,0)'},{transform:`translate(${px-x}px,0)`,opacity:.3}],{duration:900});
+    S.goats++;sfx('goat');log(`<b>${m.name}がヤギを捕まえた</b>`);
+  }else{
+    await anim(d,[{transform:'translate(0,0)'},{transform:'translate(16px,-10px)',offset:.4},{transform:'translate(34px,0)',offset:.7},{transform:'translate(56px,0)',opacity:0}],{duration:650,easing:'linear'});
+    sfx('fail');log(`${m.name}はヤギに逃げられた`);fxGroup(`<text class="fxt" x="${x}" y="116" text-anchor="middle">逃げられた</text>`);
+  }
+  await wait(700);
+}
+async function lureAnim(m){
+  S.fresh=r1(S.fresh-2);render();
+  const ok=Math.random()<LURE,px=penX(),sx=Math.min(330,px+70);
+  const salt=fxGroup(`<rect x="${px+8}" y="146" width="5" height="4" fill="#d9893a" stroke="#8a5a2a" stroke-width=".5"/>`);
+  const g=fxGroup(`<g>${goatShape(sx,150,1.4)}</g>`),d=g.firstChild;d.style.transformBox='fill-box';d.style.transformOrigin='50% 100%';
+  await anim(d,[{transform:'translate(0,-40px)',opacity:0},{transform:'translate(0,-20px)',opacity:1,offset:.5},{transform:'translate(-20px,0)',opacity:1}],{duration:1000});
+  await wait(300);
+  if(ok){await anim(d,[{transform:'translate(-20px,0)'},{transform:`translate(${px-sx}px,0)`,opacity:.3}],{duration:800});
+    S.goats++;sfx('goat');log(`<b>${m.name}のエサ罠にヤギがかかった</b>`);fxGroup(`<text class="fxt" x="${px}" y="116" text-anchor="middle">ヤギが来た</text>`);}
+  else{await anim(d,[{transform:'translate(-20px,0)'},{transform:'translate(0,-24px)',offset:.5},{transform:'translate(10px,-44px)',opacity:0}],{duration:800});
+    sfx('fail');log(`${m.name}のエサ罠は空振りだった（生鮮 −2）`);fxGroup(`<text class="fxt" x="${px}" y="116" text-anchor="middle">山へ帰った</text>`);}
+  salt.remove();await wait(700);
+}
+async function clearAnim(m){
+  sfx('tree');
+  const tree=document.getElementById('slot-'+S.tiles.length);
+  if(tree){tree.style.transformBox='fill-box';tree.style.transformOrigin='50% 100%';
+    await anim(tree,[{transform:'rotate(0)'},{transform:'rotate(-8deg)',offset:.3},{transform:'rotate(85deg)',opacity:.2}],{duration:800,easing:'ease-in'});}
+  S.tiles.push({type:'plain'});if(!has('katai'))S.wood=r1(S.wood+2);
+  log(`<b>${m.name}が森を拓いた</b> 平地 +1${has('katai')?'':'、燃料 +2'}`);
+}
+
+/* ---------- 情景 ---------- */
+const PAL={
+  spring:{s1:'#b7d3e6',s2:'#f1e4e6',mtn:'#8ea2b3',grass:'#8db35e',tree:'#3d6347',sun:'#fbeec0',leaf:'#9cc46a'},
+  summer:{s1:'#9cc8de',s2:'#e8f1e1',mtn:'#7896a5',grass:'#6c9a48',tree:'#2f5a3c',sun:'#f7e59e',leaf:'#6fa848'},
+  autumn:{s1:'#d6aa7c',s2:'#f3e1c1',mtn:'#9a7a66',grass:'#a8863a',tree:'#3a5536',sun:'#f2a35a',leaf:'#d4793a'},
+  winter:{s1:'#7a8ba1',s2:'#d3dbe4',mtn:'#5a687a',grass:'#eef3f6',tree:'#2b4739',sun:'#eef2f6',leaf:null},
+};
+const PRODUCE=['#c8503a','#e08a3a','#7fa24a','#d9b13d','#a84a6a','#c8503a','#8a6a3a'];
+function person(x,h,col){const hr=h*.16,top=150-h;
+  return`<circle cx="${x}" cy="${top+hr}" r="${hr}" fill="${col}"/><path d="M${x-h*.24} 150 L${x-h*.13} ${top+hr*2+.6} L${x+h*.13} ${top+hr*2+.6} L${x+h*.24} 150Z" fill="${col}"/>`}
+function deerShape(x){return`<ellipse cx="${x}" cy="138" rx="8" ry="4" fill="#8a5a34"/><path d="M${x-6} 140 v10 M${x-3} 140 v10 M${x+4} 140 v10 M${x+7} 140 v10" stroke="#6b4426" stroke-width="1.6"/><path d="M${x+6} 136 L${x+10} 128 L${x+13} 129 L${x+10} 137Z" fill="#8a5a34"/><path d="M${x+10} 128 l-2 -6 m2 6 l3 -5" stroke="#5a3e2a" stroke-width="1" fill="none"/>`}
+function smallDeer(x){return`<g opacity=".9"><ellipse cx="${x}" cy="143" rx="4" ry="2.2" fill="#7a4e2c"/><path d="M${x-3} 144 v6 M${x+3} 144 v6" stroke="#5a3a20" stroke-width="1.1"/><path d="M${x+3} 142 l2 -5 l2 .5 l-1.5 5Z" fill="#7a4e2c"/></g>`}
+function bigRabbit(x){return`<ellipse cx="${x}" cy="145" rx="5" ry="3.8" fill="#a89a86"/><circle cx="${x+4.4}" cy="141.5" r="2.6" fill="#a89a86"/><path d="M${x+4} 139.5 l-.8 -6 M${x+5.6} 139.5 l1.2 -5.6" stroke="#a89a86" stroke-width="1.6" stroke-linecap="round"/><circle cx="${x-5}" cy="144" r="1.4" fill="#e9e2d6"/>`}
+function boarShape(x){return`<path d="M${x-11} 141 q0 -8 9 -8 h6 q6 0 8 6 l3 2 -3 2 h-3 q-2 3 -7 3 h-6 q-7 0 -7 -5z" fill="#4f3b2b"/><path d="M${x-7} 146 v4 M${x-3} 146 v4 M${x+5} 146 v4 M${x+9} 146 v4" stroke="#3b2b1f" stroke-width="1.8"/><path d="M${x+13} 141 q2 -1 2 -3" stroke="#efe8da" stroke-width="1" fill="none"/><path d="M${x-8} 133 l2 -2 2 2 2 -2 2 2" stroke="#3b2b1f" stroke-width=".8" fill="none"/>`}
+function rabbit(x){return`<g><ellipse cx="${x}" cy="147.5" rx="2.6" ry="2" fill="#a89a86"/><circle cx="${x+2.2}" cy="145.5" r="1.4" fill="#a89a86"/><path d="M${x+2} 144.5 l-.4 -3 M${x+2.8} 144.5 l.6 -2.8" stroke="#a89a86" stroke-width=".9"/></g>`}
+function goatShape(x,base,s=1){const y=base-4*s;
+  return`<ellipse cx="${x}" cy="${y}" rx="${3.3*s}" ry="${2*s}" fill="#efe8da"/><path d="M${x-2.2*s} ${y+1} v${3*s} M${x-.8*s} ${y+1} v${3*s} M${x+1*s} ${y+1} v${3*s} M${x+2.3*s} ${y+1} v${3*s}" stroke="#6a5a48" stroke-width="${.7*s}"/><circle cx="${x+3.4*s}" cy="${y-1.6*s}" r="${1.3*s}" fill="#efe8da"/><path d="M${x+3.2*s} ${y-2.6*s} q-.6 -1.6 -1.6 -1.6" stroke="#6a5a48" stroke-width="${.6*s}" fill="none"/>`}
+function cls(i,now,was){return i<now?(was!=null&&i>=was?'arrive':''):'leave'}
+
+function tileSVG(tile,i,P,W,stage,goatsLeft,pv){
+  const x=X0+i*SW,cx=x+SW/2;let s='',used=0;
+  if(tile.lv)for(let k=0;k<tile.lv;k++)s+=`<path d="M${cx-5+k*5} 151.2 l1.5 1.5 -1.5 1.5 -1.5 -1.5Z" fill="#f2c56b"/>`;
+  if(tile.prog)s+=`<rect x="${x+3}" y="154.4" width="${SW-6}" height="1.2" fill="#4a3626"/><rect x="${x+3}" y="154.4" width="${(SW-6)*tile.prog/UPG_NEED[tile.lv||0]}" height="1.2" fill="#f2c56b"/>`;
+  const ground=c=>`<rect x="${x+.5}" y="145" width="${SW-1}" height="5" rx="1.5" fill="${c}"/>`;
+  const badge=(txt,col)=>`<rect x="${cx-6.5}" y="131.5" width="13" height="6.5" rx="1.5" fill="${col}" opacity=".92"/><text class="tag" x="${cx}" y="136.4" text-anchor="middle" style="fill:#fff">${txt}</text>`;
+  const pen=(cap,xs)=>{let o='';const n=Math.min(cap,goatsLeft);
+    for(let k=0;k<cap;k++){const gx=xs[k][0],base=xs[k][1];
+      if(k<n){const gi=pv.base+k;o+=`<g class="${cls(gi,S.goats,pv.goats)} graze" style="animation-delay:${k*.7}s">${goatShape(gx,base,1.05)}</g>`}
+      else o+=`<ellipse cx="${gx}" cy="${base-4}" rx="3.4" ry="2.1" fill="none" stroke="${W?'#9aa5ad':'#3f5a2c'}" stroke-width=".6" stroke-dasharray="1.2 1" opacity=".7"/>`}
+    used=n;return o+badge(`${n}/${cap}`,n?'#5a4a36':'#8a7a66')};
+  if(tile.type==='plain'){
+    const dug=3-(tile.peat??3);
+    s+=ground(W?'#e6ebee':'#8a9a52')+(W?'':`<path d="M${x+3} 145 l1 -3 l1 3 M${x+9} 145 l.8 -2.2 l.8 2.2 M${x+15} 145 l1 -2.8 l1 2.8" stroke="#5f7a3a" stroke-width=".8" fill="none"/><circle cx="${x+12}" cy="146.2" r="1" fill="#b9b1a0"/><circle cx="${x+6}" cy="147" r=".8" fill="#b9b1a0"/>`);
+    for(let k=0;k<dug;k++)s+=`<rect x="${x+2.5+k*6}" y="146" width="4.5" height="3" rx=".8" fill="#2f2219"/>`;
+  }else if(tile.type==='field'){
+    const sown=tile.sown&&!S.harvested,st=Math.max(1,stage);
+    s+=`<path d="M${cx-3} 153 q-3 6 -1 12 M${cx+3} 153 q4 5 2 10" stroke="#8d6c4c" stroke-width=".8" fill="none"/>`+ground(sown&&!W?'#4e3420':'#6a4a30');
+    if(!W&&!S.harvested)s+=`<path d="M${x+2} 146.6 H${x+SW-2} M${x+2} 148.6 H${x+SW-2}" stroke="${sown?'#3b2616':'#82603e'}" stroke-width=".7"/>`;
+    if(sown&&!W)s+=`<rect x="${x+.5}" y="145" width="${SW-1}" height="5" rx="1.5" fill="none" stroke="#8fcf5a" stroke-width=".8"/>`;
+    if(W){s+=`<path d="M${x+4} 145 v-3 M${x+9} 145 v-2 M${x+14} 145 v-3 M${x+18} 145 v-2" stroke="#b49a6a" stroke-width="1"/><path d="M${x+.5} 146 q${SW/2} -7 ${SW-1} 0Z" fill="#f4f7f9"/>`}
+    else if(S.harvested){s+=`<path d="M${x+4} 145 v-3 M${x+9} 145 v-3 M${x+14} 145 v-3 M${x+18} 145 v-3" stroke="#c9a85a" stroke-width="1.2"/>`}
+    else if(sown){[.2,.5,.8].forEach((f,k)=>{const px=x+SW*f;
+      if(st===1)s+=`<path d="M${px} 145 v-4.5 M${px} 142 l-2.4 -2.2 M${px} 142 l2.4 -2.2" stroke="#8fcf5a" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+      else if(st===2)s+=`<g class="sway" style="animation-delay:${k*.3}s"><path d="M${px} 145 v-9" stroke="#5f9a3e" stroke-width="1.3"/><path d="M${px} 141 q-4 -1 -4 -4 q3 0 4 3 M${px} 139 q4 -1 4 -4 q-3 0 -4 3" fill="#6fae47"/></g>`;
+      else if(st===3)s+=`<g class="sway" style="animation-delay:${k*.3}s"><path d="M${px} 145 v-16" stroke="#5b8f38" stroke-width="1.4"/><path d="M${px} 138 q-5 -1 -5 -5 q4 0 5 4 M${px} 134 q5 -1 5 -5 q-4 0 -5 4" fill="#6ba443"/><ellipse cx="${px}" cy="128" rx="1.8" ry="3.2" fill="#a9c35a"/></g>`;
+      else s+=`<g class="sway" style="animation-delay:${k*.3}s"><path d="M${px} 145 v-17" stroke="#b9963e" stroke-width="1.4"/><path d="M${px} 137 q-5 -1 -5 -5 q4 0 5 4" fill="#c4a14a"/><ellipse cx="${px}" cy="126" rx="2.3" ry="4.6" fill="#e6be4a"/></g>`;})}
+  }else if(tile.type==='pasture'){
+    s+=ground(W?'#e6ebee':'#7fa654')+`<g stroke="#7a5a3a" stroke-width="1.1"><path d="M${x+1.2} 150 v-11 M${x+SW-1.2} 150 v-11"/><path d="M${x+1} 141 H${x+SW-1} M${x+1} 145.5 H${x+SW-1}" stroke-width=".8"/></g>`;
+    s+=pen(4,[[x+6,146.5],[x+15,146.5],[x+7.5,150.5],[x+16.5,150.5]]);
+  }else if(tile.type==='grove'){
+    s+=ground(W?'#e6ebee':'#6f9a4a');
+    [[x+4,13],[x+SW-3.5,11]].forEach(([tx,h])=>{s+=`<rect x="${tx-.8}" y="${145-h}" width="1.6" height="${h}" fill="#5a3e2a"/><path d="M${tx} ${145-h-9} L${tx-5} ${145-h+3} L${tx+5} ${145-h+3}Z" fill="${P.tree}"/>${W?`<path d="M${tx} ${145-h-9} L${tx-2.5} ${145-h-4} L${tx+2.5} ${145-h-4}Z" fill="#f4f7f9"/>`:''}`});
+    s+=pen(2,[[x+8,149.5],[x+14.5,149.5]]);
+  }else if(tile.type==='smoke'){
+    s+=ground(W?'#e6ebee':'#8a7a55')+`<rect x="${x+3}" y="133" width="${SW-6}" height="12" fill="#6e5236"/><path d="M${x+1.5} 134 L${cx} 125 L${x+SW-1.5} 134Z" fill="#3e3026"/>${W?`<path d="M${x+1.5} 134 L${cx} 125 L${x+SW-1.5} 134 L${x+SW-4} 134 L${cx} 128 L${x+4} 134Z" fill="#f4f7f9"/>`:''}<rect x="${cx-2}" y="138" width="4" height="7" fill="#3e3026"/><rect x="${x+SW-7}" y="122" width="3" height="7" fill="#3e3026"/>`
+      +[0,1].map(k=>`<circle class="smoke" style="animation-delay:${k*1.6}s" cx="${x+SW-5.5}" cy="120" r="2" fill="#cfcfc8"/>`).join('');
+  }else if(tile.type==='woodlot'){
+    s+=ground(W?'#e6ebee':'#6f8a45');
+    [x+6,x+SW-6].forEach((tx,k)=>{const h=k?12:15;
+      s+=`<rect x="${tx-.8}" y="${145-h}" width="1.6" height="${h}" fill="#6b4a2e"/>`;
+      s+=P.leaf?`<circle cx="${tx}" cy="${145-h}" r="${k?4.5:5.5}" fill="${P.leaf}"/>`:`<path d="M${tx} ${147-h} l-3 -4 M${tx} ${147-h} l3 -4 M${tx} ${150-h} l3 -2" stroke="#6b4a2e" stroke-width=".8"/><circle cx="${tx}" cy="${144-h}" r="1.5" fill="#f4f7f9"/>`;});
+  }
+  return{s,used};
+}
+
+function scene(){
+  const sz=S.phase==='spring'?'spring':season(S.turn),P=PAL[sz],W=sz==='winter',t=S.turn;
+  const pv=prev||{pres:Math.floor(S.pres),fresh:Math.floor(S.fresh),wood:Math.floor(S.wood),goats:S.goats,names:S.family.map(m=>m.name)};
+  let s=`<defs><clipPath id="skyclip"><rect y="70" width="400" height="78"/></clipPath><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.s1}"/><stop offset="1" stop-color="${P.s2}"/></linearGradient></defs>
+  <rect y="70" width="400" height="82" fill="url(#sky)"/>
+  <circle cx="338" cy="92" r="${W?11:14}" fill="${P.sun}" opacity="${W?.75:1}"/>
+  <path d="M0 152 L0 118 L38 104 L76 120 L120 84 L168 116 L210 102 L258 124 L300 92 L352 118 L400 106 L400 152Z" fill="${P.mtn}" opacity=".55"/>`;
+  if(W||sz==='spring')s+=`<path d="M120 84 L110 93 L116 91 L120 96 L125 91 L131 94Z M300 92 L290 101 L296 99 L300 103 L305 99 L311 101Z" fill="#fff" opacity=".85"/>`;
+  if(!W)s+=`<g fill="#fff" opacity=".7"><ellipse cx="70" cy="94" rx="22" ry="5"/><ellipse cx="84" cy="90" rx="12" ry="5"/><ellipse cx="230" cy="106" rx="18" ry="4"/></g>`;
+  s+=`<rect y="150" width="400" height="116" fill="#6e5038"/>
+  <path d="M0 196 Q100 190 200 198 T400 194 M0 236 Q120 242 240 234 T400 240" stroke="#5f4430" stroke-width="2" fill="none"/>
+  <g fill="#806048"><ellipse cx="300" cy="214" rx="9" ry="5"/><ellipse cx="372" cy="250" rx="6" ry="4"/><ellipse cx="326" cy="244" rx="4" ry="3"/></g>
+  <rect y="147" width="400" height="5" fill="${P.grass}"/>`;
+  // 貯蔵庫
+  s+=`<rect x="8" y="156" width="250" height="106" rx="3" fill="#2b201a"/>
+  <rect x="8" y="156" width="250" height="106" rx="3" fill="none" stroke="#4a3626" stroke-width="2"/>
+  <path d="M122 160 V258 M190 160 V258" stroke="#4a3626" stroke-width="1.5"/>
+  <g stroke="#7a5a3a" stroke-width="1.4"><path d="M58 152 V156 M66 152 V156"/></g>
+  <text class="cl" x="14" y="168">保存食</text><text class="cn" x="116" y="170" text-anchor="end">${r1(S.pres)}</text>
+  <text class="cl" x="128" y="168">生鮮</text><text class="cn" x="185" y="170" text-anchor="end">${r1(S.fresh)}</text>
+  <text class="cl" x="196" y="168">燃料</text><text class="cn" x="253" y="170" text-anchor="end">${r1(S.wood)}</text>`;
+  const P0=Math.floor(S.pres),F0=Math.floor(S.fresh),W0=Math.floor(S.wood);
+  [190,212,234,256].forEach(y=>{s+=`<rect x="12" y="${y}" width="106" height="2" fill="#5a4232"/>`});
+  const jarCap=44,jn=Math.max(P0,pv.pres);
+  for(let i=0;i<Math.min(jn,jarCap);i++){const row=Math.floor(i/11),col=i%11,x=15+col*9.4,y=[190,212,234,256][3-row];
+    s+=`<g class="${cls(i,P0,pv.pres)}" style="animation-delay:${(Math.max(0,jn-1-i))*25}ms"><rect x="${x}" y="${y-13}" width="7.5" height="13" rx="2.5" fill="#c9a46a"/><rect x="${x+1}" y="${y-15}" width="5.5" height="3" rx="1" fill="#7b5b3a"/></g>`}
+  if(P0>jarCap)s+=`<text class="cl" x="116" y="184" text-anchor="end">+${P0-jarCap}</text>`;
+  s+=`<path d="M128 236 L184 236 L179 258 L133 258Z" fill="#8a6a40"/><path d="M130 242 H182 M131 247 H181 M132 252 H180" stroke="#6b4f2e" stroke-width="1"/>`;
+  const fCap=63,fn=Math.max(F0,pv.fresh);
+  for(let i=0;i<Math.min(fn,fCap);i++){const row=Math.floor(i/7),col=i%7,x=133+col*7.6+(row%2?3.5:0),y=238-row*6.4;
+    s+=`<circle class="${cls(i,F0,pv.fresh)}" style="animation-delay:${(Math.max(0,fn-1-i))*20}ms" cx="${Math.min(x,181)}" cy="${y}" r="3.4" fill="${PRODUCE[i%PRODUCE.length]}"/>`}
+  if(F0>fCap)s+=`<text class="cl" x="185" y="184" text-anchor="end">+${F0-fCap}</text>`;
+  const wCap=84,wn=Math.max(W0,pv.wood);
+  for(let i=0;i<Math.min(wn,wCap);i++){const row=Math.floor(i/7),col=i%7,x=200+col*7.8+(row%2?3.9:0),y=255-row*7;
+    s+=`<g class="${cls(i,W0,pv.wood)}" style="animation-delay:${(Math.max(0,wn-1-i))*25}ms"><circle cx="${Math.min(x,251)}" cy="${y}" r="3.7" fill="#b98250" stroke="#6b4528" stroke-width=".8"/><circle cx="${Math.min(x,251)}" cy="${y}" r="1.2" fill="#8a5a34"/></g>`}
+  if(W0>wCap)s+=`<text class="cl" x="253" y="184" text-anchor="end">+${W0-wCap}</text>`;
+  // 土地と森
+  const stage=[0,0,1,2,3,3,4,4,4,4][t]||0;
+  let goatsLeft=Math.max(S.goats,pv.goats),gBase=0;
+  S.tiles.forEach((tile,i)=>{const r=tileSVG(tile,i,P,W,stage,goatsLeft,{base:gBase,goats:pv.goats});s+=r.s;goatsLeft-=r.used;gBase+=r.used});
+  const forestStart=S.tiles.length;
+  for(let i=forestStart;i<SLOTS;i++){const x=X0+i*SW,cx=x+SW/2,dy=(i*7)%6;
+    s+=`<g id="slot-${i}"><rect x="${cx-1.5}" y="136" width="3" height="14" fill="#5a3e2a"/>
+      <path d="M${cx} ${98+dy} L${cx-8.5} ${120+dy/2} L${cx+8.5} ${120+dy/2}Z M${cx} ${108+dy} L${cx-10} 131 L${cx+10} 131Z M${cx} ${118+dy/2} L${cx-11.5} 141 L${cx+11.5} 141Z" fill="${P.tree}"/>
+      ${W?`<path d="M${cx} ${98+dy} L${cx-4} ${106+dy} L${cx+4} ${106+dy}Z M${cx-10} 131 L${cx-5} 127 L${cx} 129 L${cx+5} 127 L${cx+10} 131Z M${cx-11.5} 141 L${cx-6} 137 L${cx+6} 137 L${cx+11.5} 141Z" fill="#f4f7f9"/>`:''}
+      ${sz==='autumn'&&i%3===1?`<circle cx="${cx-5}" cy="128" r="1.5" fill="#c8503a"/><circle cx="${cx+4}" cy="136" r="1.5" fill="#e08a3a"/>`:''}</g>`;}
+  // 森の動物（森が減ると減る）
+  const animals=Math.round(wild()/2.4);
+  for(let k=0;k<animals;k++){const slot=SLOTS-1-((k*2)%Math.max(1,forestLeft()));const ax=X0+slot*SW+(k%2?4:SW-5);
+    if(slot<forestStart)break;s+=k%2?rabbit(ax):smallDeer(ax)}
+  // 家
+  const warm=S.wood>0&&(W||sz==='spring');
+  s+=`<rect x="56" y="92" width="7" height="18" fill="#4b3a2e"/>`;
+  if(S.wood>0)for(let k=0;k<3;k++)s+=`<circle class="smoke" style="animation-delay:${k*1.2}s" cx="59.5" cy="88" r="3" fill="${W?'#e9edf1':'#d9dcde'}"/>`;
+  s+=`<rect x="14" y="116" width="58" height="34" fill="#8a6a4a"/><path d="M14 124 H72 M14 132 H72 M14 140 H72" stroke="#76583c" stroke-width="1"/>
+  <path d="M6 119 L43 88 L80 119Z" fill="#4b3a2e"/>${W?`<path d="M6 119 L43 88 L80 119 L74 119 L43 94 L12 119Z" fill="#f4f7f9"/>`:''}
+  <rect x="20" y="125" width="11" height="9" fill="${warm?'#f2c56b':'#3a2c22'}" stroke="#4b3a2e" stroke-width="1.5"/>
+  <rect x="46" y="130" width="12" height="20" fill="#5a4330"/>`;
+  // 雪
+  if(W){const h=2+(t-6)*2.4;s+=`<rect y="${150-h}" width="400" height="${h+2}" fill="#f1f5f8" opacity=".95"/><g clip-path="url(#skyclip)">`;
+    for(let k=0;k<22;k++){const x=(k*53)%400,dur=4+(k%5),del=-(k*0.7);s+=`<circle class="flake" style="animation-duration:${dur}s;animation-delay:${del}s" cx="${x}" cy="${70+(k*17)%20}" r="${1+(k%3)*.5}" fill="#fff" opacity=".9"/>`}s+=`</g>`}
+  // 家族
+  const names=S.family.map(m=>m.name),ghosts=pv.names.filter(n=>!names.includes(n)),shown=S.family.slice(0,6);
+  shown.forEach((m,i)=>{const h=m.adult?(isOld(m)?14:m.role?16:15):8;const col=isOld(m)?'#6b6f78':m.adult?'#2a2f3b':'#3e4a5e';const x=86+i*8.6;
+    s+=`<g class="${pv.names.includes(m.name)?'':'arrive'}">${person(x,h,col)}${W?`<rect x="${x-h*.15}" y="${150-h+h*.32}" width="${h*.3}" height="${Math.max(1.4,h*.08)}" fill="#b8453a"/>`:''}${i===sel&&S.phase==='play'?`<path d="M${x-2} ${146-h-5} L${x+2} ${146-h-5} L${x} ${148-h-2}Z" fill="#f2c56b"/>`:''}</g>`});
+  ghosts.forEach((n,k)=>{s+=`<g class="leave">${person(86+(shown.length+k)*8.6,14,'#2a2f3b')}</g>`});
+  if(S.family.length>6)s+=`<text class="fxt" x="134" y="132" text-anchor="middle" style="font-size:9px">+${S.family.length-6}</text>`;
+  if(S.weak>0)s+=`<rect y="70" width="400" height="196" fill="#bcd2e8" opacity="${Math.min(.35,S.weak/weakLimit()*.35)}" pointer-events="none"/>`;
+  return s;
+}
+
+/* ---------- 長押しの説明 ---------- */
+let lp=null,suppress=false;
+function peekable(el,fn,onTap){
+  el.classList.add('peekable');
+  el.addEventListener('pointerdown',e=>{hidePeek();suppress=false;
+    lp={x:e.clientX,y:e.clientY,timer:setTimeout(()=>{suppress=true;lp=null;showPeek(el,fn());try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}} ,420)}});
+  el.addEventListener('pointermove',e=>{if(lp&&Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>10){clearTimeout(lp.timer);lp=null}});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,()=>{if(lp){clearTimeout(lp.timer);lp=null}}));
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  el.addEventListener('click',e=>{if(suppress){suppress=false;e.preventDefault();return}if(onTap)onTap()});
+}
+function showPeek(el,html){
+  const p=$('peek');p.innerHTML=html;p.hidden=false;
+  const r=el.getBoundingClientRect(),w=p.offsetWidth,h=p.offsetHeight;
+  let left=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8),top=r.top-h-8;
+  if(top<8)top=Math.min(innerHeight-h-8,r.bottom+8);
+  p.style.left=left+'px';p.style.top=top+'px';
+}
+function hidePeek(){$('peek').hidden=true}
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.peekable'))hidePeek()},true);
+addEventListener('scroll',hidePeek,{passive:true});
+
+/* ---------- アイコン ---------- */
+const ICON={
+  '採集':'<path d="M4 11h16l-2 9H6z"/><circle cx="9" cy="7.5" r="2.2"/><circle cx="14.5" cy="7" r="2.2"/>',
+  '種まき':'<path d="M3 20h18"/><path d="M7 4c4 0 5 4 2 6"/><circle cx="11" cy="13" r=".9"/><circle cx="15" cy="15.5" r=".9"/><circle cx="9" cy="16.5" r=".9"/>',
+  '畑を作る':'<path d="M3 20h18M5 20l4-11M10 20l3-11M15 20l2-11M19 20V9"/>',
+  '狩り':'<path d="M6 3c9 4 9 14 0 18"/><path d="M6 3v18" stroke-dasharray="2 2"/><path d="M3 12h17M17 9l3 3-3 3"/>',
+  'ヤギを捕る':'<path d="M7 9c-2-3-1-5 1-6M17 9c2-3 1-5-1-6"/><path d="M7 9h10l-1 6-4 5-4-5z"/><circle cx="10" cy="12" r=".6"/><circle cx="14" cy="12" r=".6"/>',
+  '牧場を作る':'<path d="M4 6v14M12 6v14M20 6v14M3 10h18M3 15h18"/>',
+  '乳搾り':'<path d="M5 9h14l-2 11H7z"/><path d="M7 9c0-4 10-4 10 0"/><path d="M9 14h6"/>',
+  '畜殺':'<path d="M4 20 14 10"/><path d="M14 10 20 4c1 4-1 7-4 9z"/>',
+  '薪割り':'<path d="M5 21 15 7"/><path d="M13 4c3-1 6 1 7 4l-5 3c-1-3-2-5-2-7z"/>',
+  '開墾':'<path d="M7 21v-6h10v6"/><ellipse cx="12" cy="15" rx="5" ry="1.8"/><path d="M12 11V3M9 6l3-3 3 3"/>',
+  '薪炭林を植える':'<path d="M12 21v-9"/><circle cx="12" cy="8" r="5"/><path d="M6 21h12"/>',
+  '燻製小屋':'<path d="M4 21V11l8-6 8 6v10z"/><path d="M10 21v-5h4v5"/><path d="M17 7V3"/>',
+  '保存加工':'<path d="M8 6h8v2c2 1 3 3 3 5v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6c0-2 1-4 3-5z"/><path d="M7 4h10"/>',
+  '子をなす':'<circle cx="9" cy="6" r="2.5"/><path d="M5 21v-6a4 4 0 0 1 8 0v6"/><circle cx="17" cy="11" r="1.8"/><path d="M14.5 21v-3a2.5 2.5 0 0 1 5 0v3"/>',
+  '油搾り':'<path d="M12 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z"/><path d="M10 13a2 2 0 0 0 2 2"/>',
+  'エサ罠':'<path d="M3 20l6-10 4 6 2-3 6 7z"/><path d="M15 4v5M12.5 6.5h5"/>',
+  '林間放牧地':'<path d="M7 20v-5"/><path d="M7 4l-4 7h8z"/><path d="M3 20h18M12 20v-6h8v6M12 16h8"/>',
+  '泥炭掘り':'<path d="M14 3l-6 12"/><path d="M6 13l4 2-2 4-4-2z"/><path d="M13 21h8l-2-4h-4z"/>',
+  '燻製づくり':'<path d="M5 21h14"/><path d="M7 21V9h10v12"/><path d="M9 13h6M9 17h6"/><path d="M10 6c0-2 2-2 2-4M14 6c0-2 2-2 2-4"/>',
+  '枝拾い':'<circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/><circle cx="12" cy="10" r="3"/>',
+  '罠猟':'<circle cx="12" cy="11" r="6"/><path d="M12 17v4M4 21h16"/>',
+  '畑の改良':'<path d="M3 20h18M6 20l3-8M11 20l2-8M16 20l1-8"/><path d="M15 3l1.5 3 3 .5-2.2 2 .6 3-2.9-1.6L12 11.5l.6-3-2.2-2 3-.5z"/>',
+  '燻製小屋の改良':'<path d="M3 21V12l7-5 7 5v9z"/><path d="M8 21v-4h4v4"/><path d="M19 3l1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L16 5.3l2-.3z"/>',
+  '薪炭林の手入れ':'<path d="M9 21v-7"/><circle cx="9" cy="10" r="4"/><path d="M14 20l6-6M17 14h3v3"/>',
+  '氷上釣り':'<path d="M3 19h18"/><ellipse cx="12" cy="19" rx="3" ry="1"/><path d="M5 4l9 4M14 8v11"/><path d="M14 19c1 1 2 0 1.5-1"/>',
+  '勉学':'<path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6v14"/>',
+};
+const SHORT={'林間放牧地':'林間放牧','薪炭林を植える':'薪炭林','牧場を作る':'牧場','畑を作る':'畑','ヤギを捕る':'ヤギ捕り','燻製小屋':'燻製小屋','畑の改良':'畑の改良','燻製小屋の改良':'燻製改良','薪炭林の手入れ':'林の手入れ'};
+const SK1={mokko:'木',noko:'農',shuryo:'狩',bokuchiku:'牧',hozon:'加',chikusan:'畜',kenchiku:'建',ringyo:'林',doko:'土',kairyo:'燻'};
+const SKILL_OF={adult:'大人',study:'2歳以上'};
+
+/* ---------- 描画 ---------- */
+function modal({k,title,body,options}){
+  hidePeek();
+  const m=$('modal');
+  m.innerHTML=`<div class="k">${k}</div><h2>${title}</h2><div class="b">${body}</div><div class="opts"></div>`;
+  const box=m.querySelector('.opts');
+  options.forEach(o=>{const b=document.createElement('button');b.type='button';b.className='opt'+(o.main?' main':'');b.disabled=!!o.disabled;
+    b.innerHTML=`<b>${o.label}</b>${o.sub?`<span>${o.sub}</span>`:''}`;
+    b.onclick=()=>{$('overlay').hidden=true;o.onPick()};box.appendChild(b)});
+  $('overlay').hidden=false;setTimeout(()=>box.querySelector('button:not(:disabled)')?.focus({preventScroll:true}),30);
+}
+
+function landPeek(){
+  const sown=S.tiles.filter(x=>x.type==='field'&&x.sown).length;
+  return`<h4>開拓地</h4><ul>
+    <li>畑 ${count('field')}（種まき済 ${sown}）・収穫 ${harvestPer()}＋Lv×3／枚</li>
+    ${S.tiles.some(t=>t.lv)?`<li>改良：${S.tiles.filter(t=>t.lv||t.prog).map(t=>`${TNAME[t.type]}Lv${t.lv||0}${t.prog?`(${t.prog}/${UPG_NEED[t.lv]})`:''}`).join('・')}</li>`:''}
+    <li>燻製小屋：秋の終わりに生鮮の${Math.round(smokeRate()*100)}%を保存食に・乳搾り 1回 番2組まで</li>
+    <li>林間放牧地 ${count('grove')}・泥炭 残り${peatLeft()}回分</li>
+    <li>牧場 ${count('pasture')}・ヤギ ${S.goats}/${goatCap()}（番 ${Math.floor(S.goats/2)}）</li>
+    <li>燻製小屋 ${count('smoke')}・薪炭林 ${count('woodlot')}・平地 ${count('plain')}</li>
+    <li>残る森 ${forestLeft()}／${SLOTS}</li>
+    <li>狩り ${pct(huntChance())}・ヤギ捕り ${pct(goatChance())}</li></ul>
+    <div class="m" style="margin-top:4px">森を拓くほど獲物は減る</div>`;
+}
+function stripPeek(){
+  const W=season(S.turn)==='winter'&&S.phase!=='spring';
+  return`<h4>${W?`冬の残り ${winterLeft()} ターン`:'この冬の見込み（3ターン）'}</h4>
+    <div>毎ターン 家族の食料 ${r1(famFood())}${S.goats?`＋ヤギ ${r1(goatFood())}`:''}、燃料 ${r1(woodPer())}</div>
+    <div>寒さ 第${S.year}段階（毎年きびしくなる）</div>
+    <div>生鮮は春が来たときに ${Math.round(springRot()*100)}% 傷む${rotRate()?`。腐りの風で冬の毎ターン ${Math.round(rotRate()*100)}% 傷む`:''}。保存食は傷まない</div>
+    <div>メーターの食料は、冬の間に腐りの風で傷む分を差し引いた見込み</div>
+    <div class="m">衰弱 ${S.weak}/${weakLimit()}：食料か燃料が足りないと +1、さらに5足りないごとに +1。限界で1人を失う（老い→子→大人の順）</div>`;
+}
+function memberPeek(m){
+  const lacking=Object.keys(SKILLS).filter(k=>!m.skills.includes(k)).map(k=>SKILLS[k]);
+  const need=studyNeed();
+  return`<h4>${m.name}</h4><div class="m">${role(m)}${m.adult?`・大人${m.years||0}年目`:''}・AP ${memberMax(m)}</div>
+    <div class="m">${!m.adult?'':isOld(m)?`老い：夏秋のAP −1、食料 2。${deathChance({...m,years:(m.years||0)+1})?`この冬の終わりに世を去る確率 ${pct(deathChance({...m,years:(m.years||0)+1}))}`:`${FRAIL_AT}年目を迎える冬の終わりから、世を去ることがある`}`:`${OLD_AT}年目から老いて夏秋のAP −1`}</div>
+    <div>技術：${m.skills.length?m.skills.map(k=>SKILLS[k]).join('・'):'なし'}</div>
+    ${lacking.length?`<div class="m">持っていない：${lacking.join('・')}</div>`:''}
+    ${m.skills.length<SKILL_MAX?`<div>勉学 ${m.study}/${need}（冬に学べる）</div>`:`<div class="m">技術は${SKILL_MAX}つまで。もう覚えられない</div>`}
+    ${!m.adult?`<div class="m">次の春に大人になり、技術をひとつ覚える</div>`:''}`;
+}
+const ACT_ORDER=['採集','種まき','罠猟','枝拾い','勉学','薪割り','開墾','畑を作る','畑の改良','狩り','氷上釣り','ヤギを捕る','乳搾り','畜殺','エサ罠','保存加工','油搾り','燻製づくり','燻製小屋の改良','牧場を作る','燻製小屋','薪炭林を植える','薪炭林の手入れ','林間放牧地','泥炭掘り','子をなす'];
+function modsFor(a,m){
+  const o=[],old=isOld(m),au=season(S.turn)==='autumn',W=season(S.turn)==='winter';
+  const up=t=>o.push({up:true,t}),dn=t=>o.push({up:false,t});
+  const mir=(id,tx,isUp)=>{const n=mc(id);if(n)(isUp?up:dn)(`${(BOONS[id]||TRIALS[id]).name}${n>1?'×'+n:''} ${tx(n)}`)};
+  switch(a.name){
+    case'採集':if(old)up('老練 +1');if(au)up('秋 +1');mir('ame',n=>'+'+n,true);break;
+    case'種まき':if(old)up('老練 2枚まで');break;
+    case'枝拾い':if(old)up('老練 +1');break;
+    case'罠猟':if(old)up('老練 1〜3に');break;
+    case'乳搾り':if(W)dn('冬 1組 −1');mir('chichi',n=>'1組 +'+n,true);break;
+    case'薪割り':mir('ono',n=>'+'+n,true);mir('nibui',n=>'−'+n,false);break;
+    case'開墾':mir('kuwa',n=>'AP −'+n,true);mir('katai',()=>'燃料が出ない',false);break;
+    case'畑を作る':mir('katai',n=>'AP +'+n,false);break;
+    case'狩り':case'ヤギを捕る':mir('kari',n=>'成功率 +'+15*n+'%',true);mir('kemono',n=>'成功率 −'+15*n+'%',false);break;
+    case'勉学':mir('manabi',n=>'必要AP −'+n,true);mir('wasure',n=>'必要AP +'+n,false);break;
+  }
+  return o;
+}
+function actPeek(a,m){
+  const ok=a.ok?a.ok():true;const md=modsFor(a,m);
+  const req=a.skill===null?'誰でも':SKILLS[a.skill]?`技術「${SKILLS[a.skill]}」`:SKILL_OF[a.skill];
+  return`<h4>${a.name}</h4><div>${a.desc}</div><div class="m">AP ${a.cost}・${req}</div>
+    ${md.map(x=>`<div class="${x.up?'mu':'mdn'}">${x.up?'▲':'▼'} ${x.t}</div>`).join('')}
+    ${ok!==true?`<div class="w">${ok}</div>`:m.ap<a.cost?`<div class="w">${m.name}のAPが足りない</div>`:''}`;
+}
+
+peekable($('stage'),landPeek);
+peekable($('strip'),stripPeek);
+
+function render(){
+  updateMusic();
+  const sz=season(S.turn),sp=S.phase==='spring',W=sz==='winter'&&!sp;
+  $('when').innerHTML=`第${S.year}年 ${sp?'春':SJP[sz]}<small>${sp?'':`${S.turn}/9`}</small>`;
+  $('score').textContent=S.winterScores.reduce((a,b)=>a+b,0);
+  $('tl').innerHTML=Array.from({length:9},(_,i)=>{const t=i+1,c=t<=3?'s':t<=6?'a':'w';
+    return`<div class="cell ${c} ${t!==6&&t!==9?'ev':''} ${!sp&&t<S.turn?'past':''} ${!sp&&t===S.turn?'now':''}"></div>`}).join('');
+  $('scene').innerHTML=scene();
+  prev={pres:Math.floor(S.pres),fresh:Math.floor(S.fresh),wood:Math.floor(S.wood),goats:S.goats,names:S.family.map(m=>m.name)};
+  $('badge').innerHTML=`衰弱 ${Array.from({length:weakLimit()},(_,i)=>`<i class="${i<S.weak?'on':''}"></i>`).join('')}`;
+  const left=winterLeft(),fNeed=r1(foodPerTurn()*left),wNeed=r1(woodPer()*left),wHave=S.wood;
+  let sf=S.fresh,spr=S.pres,rotted=0;for(let i=0;i<left;i++){let n=foodPerTurn();const a=Math.min(sf,n);sf-=a;n-=a;spr-=Math.min(spr,n);const r=sf*rotRate();sf-=r;rotted+=r}
+  const fHave=r1(S.pres+S.fresh-rotted);
+  const bar=(h,n)=>{const p=n?Math.min(100,h/n*100):100;return`<div class="bar"><i class="${p>=100?'':p>=60?'warn':'bad'}" style="width:${p}%"></i></div>`};
+  $('strip').innerHTML=`<div class="meter"><span>食</span>${bar(fHave,fNeed)}<span class="num">${fHave}/${fNeed}</span></div>
+    <div class="meter"><span>燃料</span>${bar(wHave,wNeed)}<span class="num">${wHave}/${wNeed}</span></div>`;
+  // 家族
+  const need=studyNeed();$('roster').innerHTML='';
+  S.family.forEach((m,i)=>{const b=document.createElement('button');b.type='button';
+    const max=Math.max(m.ap,memberMax(m));
+    b.className='who'+(i===sel?' sel':'')+(m.ap<=0?' spent':'');
+    b.innerHTML=`<span class="nm">${m.name}${isOld(m)?'<span class="old">老</span>':''}</span>
+      <span class="ln"><span class="sks">${m.skills.map(k=>`<span class="sk">${SK1[k]}</span>`).join('')||'<span class="num">技術なし</span>'}</span>
+      <span class="pips">${Array.from({length:max},(_,j)=>`<span class="pip ${j<m.ap?'on':''}"></span>`).join('')}</span></span>
+      ${m.study>0?`<span class="study"><i style="width:${m.study/need*100}%"></i></span>`:''}`;
+    peekable(b,()=>memberPeek(m),()=>{sel=i;render()});$('roster').appendChild(b)});
+  if(sel>=0&&$('roster').children[sel]){const c=$('roster').children[sel],r=$('roster');if(c.offsetLeft<r.scrollLeft||c.offsetLeft+c.offsetWidth>r.scrollLeft+r.clientWidth)r.scrollLeft=c.offsetLeft-8}
+  // 行動
+  const m=S.family[sel];const box=$('actions');box.innerHTML='';
+  const playing=S.phase==='play'&&!busy;
+  if(m){
+    $('selname').textContent=m.name;
+    $('selsub').textContent=!m.adult&&memberMax(m)===0?' はまだ幼くて働けない':memberMax(m)===0?' はこのターン働けない（AP 0）':` の行動・残りAP ${m.ap}`;
+    catalog(m).filter(a=>canDo(m,a)).sort((x,y)=>ACT_ORDER.indexOf(x.name)-ACT_ORDER.indexOf(y.name)).forEach(a=>{const md=modsFor(a,m);const ok=a.ok?a.ok():true;const b=document.createElement('button');b.type='button';
+      const off=!playing||m.ap<a.cost||ok!==true;
+      b.className='act'+(off?' off':'');b.setAttribute('aria-disabled',off);
+      b.innerHTML=`${md.length?`<span class="md">${md.some(x=>x.up)?'<b class="up">▲</b>':''}${md.some(x=>!x.up)?'<b class="dn">▼</b>':''}</span>`:''}<span class="c">${'<i></i>'.repeat(a.cost)}</span><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[a.name]||''}</svg><span class="t">${SHORT[a.name]||a.name}</span>`;
+      peekable(b,()=>actPeek(a,m),()=>{if(!off)act(a,m)});box.appendChild(b)});
+  }
+  $('autoNote').textContent=S.phase==='play'?(busy?'ターンを進めています…':'全員がAPを使い切ると、ターンが自動で進む'):'';
+  $('bc').textContent='恩'+S.boons.length;$('tc').textContent='試'+S.trials.length;
+}
+
+$('facBtn').onclick=()=>showFacilities();
+$('logBtn').onclick=()=>modal({k:'これまでの記録',title:'記録',body:`<ul class="log">${S.log.map(l=>`<li>${l}</li>`).join('')}</ul>`,options:[{label:'閉じる',main:true,onPick(){}}]});
+$('godBtn').onclick=()=>modal({k:'女神の恩恵と試練',title:'授かったもの',body:S.boons.length?`<div class="mlist">${[...new Set(S.boons)].map(id=>`<div class="bn"><b>${BOONS[id].name}${mc(id)>1?' ×'+mc(id):''}</b><span>${BOONS[id].desc}</span></div>`).join('')}${[...new Set(S.trials)].map(id=>`<div class="tr"><b>${TRIALS[id].name}${mc(id)>1?' ×'+mc(id):''}</b><span>${TRIALS[id].desc}</span></div>`).join('')}<div class="m" style="color:var(--muted)">同じものは効果が重なる</div></div>`:'最初の冬を越えると、春に女神が現れる。',options:[{label:'閉じる',main:true,onPick(){}}]});
+
+function newGame(){prev=null;$('title').hidden=true;newState();log(`夏、${S.family[0].name}と${S.family[1].name}の暮らしが始まる。まずは畑に種をまき、平地の使い道を決めよう`);startTurn()}
+function titleScene(){
+  const keep=S,kp=prev;
+  S={year:3,turn:3,fresh:9,pres:16,wood:14,weak:0,goats:4,phase:'play',harvested:false,boons:[],trials:[],extraWood:0,nextApDelta:0,
+    tiles:[{type:'field',sown:true,lv:2},{type:'field',sown:true,lv:1},{type:'pasture'},{type:'smoke',lv:1},{type:'woodlot'},{type:'field',sown:true}],
+    family:[{name:'a',adult:true,role:'父',years:2},{name:'b',adult:true,role:'母',years:1},{name:'c',adult:false,age:0}]};
+  prev=null;const html=scene().replace(/id="slot-/g,'data-slot="');S=keep;prev=kp;return html;
+}
+function showTitle(){
+  $('overlay').hidden=true;hidePeek();
+  if(!S||S.phase!=='title'){newState();S.phase='title'}
+  $('tscene').innerHTML=titleScene();
+  let best=0;try{best=+localStorage.getItem('ettou-best')||0}catch(_){}
+  $('bestLine').textContent=best?`最高記録 ${best}`:'';
+  $('title').hidden=false;render();updateMusic();
+  setTimeout(()=>$('startBtn').focus({preventScroll:true}),50);
+}
+$('rankBtn').onclick=()=>showRanking();
+$('startBtn').onclick=()=>{if(AU.on)auInit();sfx('birth');newGame();updateMusic()};
+document.querySelectorAll('[data-snd]').forEach(b=>b.onclick=()=>{setSound(!AU.on);if(AU.on){updateMusic();sfx('tap')}});
+setSound(AU.on,false);
+document.addEventListener('pointerdown',()=>{if(AU.on){const had=!!AU.ctx;auInit();if(!had)updateMusic()}},true);
+function start(data){
+  busy=false;
+  if(data&&data.S&&data.S.tiles&&data.S.phase!=='title'){S=data.S;sel=0;render();if(S.phase==='spring')showFate();else if(S.phase==='over')finish(!S.family.length);return}
+  S=null;showTitle();
+}
+window.claude?.hot?.snapshot?.(()=>({S}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+
+</body>
+</html>
